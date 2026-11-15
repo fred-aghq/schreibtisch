@@ -1,0 +1,49 @@
+.app {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr) 288px;
+  grid-template-rows: 48px minmax(0, 1fr) 28px;
+  grid-template-areas:
+    'top top top'
+    'left canvas right'
+    'status status status';
+  height: 100vh;
+  height: 100dvh;
+  min-width: 900px;
+}
+
+.left {
+  grid-area: left;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.right {
+  grid-area: right;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  min-height: 0;
+  overflow: auto;
+}
+
+.canvas {
+  grid-area: canvas;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+}
+
+.placeholder {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--text-muted);
+  background: var(--canvas-bg);
+}
+
+@media (max-width: 1180px) {
+  .app {
+    grid-template-columns: 220px minmax(0, 1fr) 264px;
+  }
+}

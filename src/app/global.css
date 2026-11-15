@@ -1,0 +1,104 @@
+:root {
+  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --radius: 8px;
+  --radius-sm: 6px;
+  --gap: 12px;
+
+  --accent: #6ea8fe;
+  --accent-strong: #8db9ff;
+  --accent-soft: rgba(110, 168, 254, 0.16);
+  --danger: #f07178;
+  --warn: #f2b84b;
+  --ok: #7ccf8a;
+
+  --bg: #111418;
+  --surface: #171b21;
+  --surface-2: #1d222a;
+  --surface-3: #252b35;
+  --border: #2a313c;
+  --text: #e6e9ee;
+  --text-muted: #9099a8;
+  --text-faint: #5e6878;
+
+  --canvas-bg: #0d1014;
+  /* Grid sits on the desk surface (usually a light wood), so it is dark in both themes. */
+  --grid: rgba(0, 0, 0, 0.1);
+  --grid-strong: rgba(0, 0, 0, 0.2);
+  --desk-stroke: rgba(0, 0, 0, 0.45);
+  --object-stroke: rgba(10, 12, 16, 0.75);
+  --label: #e6e9ee;
+  --label-halo: rgba(13, 16, 20, 0.85);
+  --listener: #c3cad6;
+
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --accent: #2f6fde;
+  --accent-strong: #1f5bc4;
+  --accent-soft: rgba(47, 111, 222, 0.12);
+  --danger: #d6454f;
+  --warn: #c88a12;
+  --ok: #2f9e48;
+
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #f6f7f9;
+  --surface-3: #eceef2;
+  --border: #dde1e7;
+  --text: #1c2129;
+  --text-muted: #5f6877;
+  --text-faint: #98a0ad;
+
+  --canvas-bg: #e9ecf0;
+  --desk-stroke: rgba(0, 0, 0, 0.35);
+  --object-stroke: rgba(20, 24, 30, 0.55);
+  --label: #1c2129;
+  --label-halo: rgba(255, 255, 255, 0.85);
+  --listener: #59616e;
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
