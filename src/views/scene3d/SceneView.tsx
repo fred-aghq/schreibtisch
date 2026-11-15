@@ -3,6 +3,7 @@ import { Canvas, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import { Raycaster, Vector2 } from 'three';
 import { CAMERA_PRESETS, PRESET_LABELS } from '../../geometry/camera';
+import type { CameraPreset } from '../../geometry/camera';
 import { findOverlaps } from '../../geometry/overlap';
 import { horizontalPlane, intersectRayPlane } from '../../geometry/ray';
 import { setSettings } from '../../model/ops';
@@ -17,7 +18,8 @@ import styles from './SceneView.module.css';
 
 export default function SceneView() {
   const activePreset = useStore((s) => s.activePreset);
-  const requestCamera = useStore((s) => s.requestCamera);
+  const sendViewCommand = useStore((s) => s.sendViewCommand);
+  const requestCamera = (preset: CameraPreset | 'fit') => sendViewCommand({ kind: 'camera', preset });
   const apply = useStore((s) => s.apply);
   const layout = useLayout();
   const showFloor = layout.settings.showFloor;

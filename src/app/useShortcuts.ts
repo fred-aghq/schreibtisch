@@ -1,11 +1,8 @@
 import { useEffect } from 'react';
+import { isTypingTarget } from '../lib/dom';
 import { CAMERA_PRESETS } from '../geometry/camera';
 import { deleteSelected, duplicateSelected, nudgeSelected, rotateSelected } from '../store/commands';
 import { useStore } from '../store/store';
-
-function isTypingTarget(t: EventTarget | null): boolean {
-  return t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
-}
 
 /** Global keyboard shortcuts. Ignored while typing in a field. */
 export function useShortcuts(): void {
@@ -38,8 +35,7 @@ export function useShortcuts(): void {
         return;
       }
       if (!mod && key === 'f') {
-        if (s.view === '3d') s.requestCamera('fit');
-        else s.requestFit();
+        s.sendViewCommand(s.view === '3d' ? { kind: 'camera', preset: 'fit' } : { kind: 'fit' });
         return;
       }
       // Number keys: camera presets (switches to 3D).
@@ -47,7 +43,7 @@ export function useShortcuts(): void {
       const preset = CAMERA_PRESETS[presetIndex];
       if (preset) {
         s.setView('3d');
-        s.requestCamera(preset);
+        s.sendViewCommand({ kind: 'camera', preset });
         return;
       }
 

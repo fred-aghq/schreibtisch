@@ -10,7 +10,7 @@ export function TopBar() {
   const canRedo = useStore((st) => st.history.future.length > 0);
   const view = useStore((st) => st.view);
   const theme = useStore((st) => st.theme);
-  const { apply, undo, redo, setView, toggleTheme, replaceLayout, requestFit, setShowShortcuts } = useStore.getState();
+  const { apply, undo, redo, setView, toggleTheme, replaceLayout, sendViewCommand, setShowShortcuts } = useStore.getState();
 
   return (
     <header className={s.bar}>
@@ -53,7 +53,7 @@ export function TopBar() {
           onClick={() => {
             if (window.confirm('Replace the current layout with a fresh default one? This cannot be undone.')) {
               replaceLayout(createDefaultLayout());
-              requestFit();
+              sendViewCommand({ kind: 'fit' });
             }
           }}
         >

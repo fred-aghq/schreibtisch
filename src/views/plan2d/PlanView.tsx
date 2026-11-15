@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { dimensionGuides } from '../../geometry/guides';
 import { obbAabb } from '../../geometry/obb';
 import { findOverlaps } from '../../geometry/overlap';
-import { instanceObb, isBelowDesk, layoutAabb } from '../../geometry/scene';
+import { instanceObb, isBelowDesk } from '../../geometry/scene';
 import { snapInstance, snapListener } from '../../geometry/snap';
 import type { SnapLine } from '../../geometry/snap';
 import { formatMm, niceLength } from '../../geometry/units';
 import type { Vec2 } from '../../geometry/vec';
-import { classifyWheel, fitBounds, pan, screenToWorld, worldToScreen, zoomAt, zoomTo } from '../../geometry/viewport';
+import { pan, screenToWorld, worldToScreen } from '../../geometry/viewport';
 import type { Viewport } from '../../geometry/viewport';
 import type { Layout, ObjectDefinition, ObjectInstance } from '../../model/types';
 import { moveInstance, setListener } from '../../model/ops';
@@ -16,6 +16,7 @@ import { useLayout, useStore } from '../../store/store';
 import { Icon } from '../../ui/Icon';
 import { DeskShape, GridLines, ListenerShape } from './shapes';
 import styles from './PlanView.module.css';
+import { updateViewport, usePlanViewport } from './usePlanViewport';
 
 type Drag =
   | { kind: 'pan'; pointerId: number; lastX: number; lastY: number }
@@ -31,117 +32,19 @@ interface ActiveSnap {
   lineZ: SnapLine | null;
 }
 
-/** Survives remounts (switching 2D ↔ 3D) so the plan keeps its pan/zoom. */
-let memory: { vp: Viewport; fitRequest: number } | null = null;
-
 export function PlanView() {
   const layout = useLayout();
   const selection = useStore((s) => s.selection);
-  const fitRequest = useStore((s) => s.fitRequest);
-
-  const containerRef = useRef<HTMLDivElement>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
-  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
-  const [vp, setVp] = useState<Viewport>(() => memory?.vp ?? { scale: 0.5, offsetX: 0, offsetY: 0 });
+  const { containerRef, svgRef, size, vp, spaceHeld, zoomBy } = usePlanViewport();
   const [drag, setDrag] = useState<Drag | null>(null);
-  const [spaceHeld, setSpaceHeld] = useState(false);
   const [snap, setSnap] = useState<ActiveSnap>({ lineX: null, lineZ: null });
-  const fittedFor = useRef<number | null>(memory?.fitRequest ?? null);
-  const layoutRef = useRef(layout);
-  useEffect(() => {
-    layoutRef.current = layout;
-  }, [layout]);
-
-  // Track the canvas size.
-  useLayoutEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(([entry]) => {
-      if (!entry) return;
-      const { width, height } = entry.contentRect;
-      setSize({ w: Math.round(width), h: Math.round(height) });
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  // Zoom to fit on first layout and whenever requested (F key / button).
-  useEffect(() => {
-    if (!size || size.w === 0 || fittedFor.current === fitRequest) return;
-    fittedFor.current = fitRequest;
-    setVp(fitBounds(layoutAabb(layoutRef.current), size.w, size.h, 48));
-  }, [fitRequest, size]);
-
-  // Absolute zoom requests (e.g. 100 %), centred on the canvas.
-  const sizeRef = useRef(size);
-  useEffect(() => {
-    sizeRef.current = size;
-  }, [size]);
-  useEffect(
-    () =>
-      useStore.subscribe((state) => {
-        const target = state.zoomRequest;
-        const sz = sizeRef.current;
-        if (target === null || !sz) return;
-        state.requestZoom(null);
-        setVp((v) => zoomTo(v, { x: sz.w / 2, y: sz.h / 2 }, target));
-      }),
-    [],
-  );
-
-  useEffect(() => {
-    useStore.getState().setZoom(vp.scale);
-    memory = { vp, fitRequest: fittedFor.current ?? -1 };
-  }, [vp]);
-
-  // Wheel: zoom toward the cursor (mouse / pinch) or pan (trackpad scroll). Needs a non-passive listener.
-  useEffect(() => {
-    const svg = svgRef.current;
-    if (!svg) return;
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const rect = svg.getBoundingClientRect();
-      const intent = classifyWheel(e);
-      if (intent.kind === 'zoom') {
-        setVp((v) => zoomAt(v, { x: e.clientX - rect.left, y: e.clientY - rect.top }, intent.factor));
-      } else {
-        setVp((v) => pan(v, intent.dx, intent.dy));
-      }
-    };
-    svg.addEventListener('wheel', onWheel, { passive: false });
-    return () => svg.removeEventListener('wheel', onWheel);
-  }, []);
-
-  // Space bar enables click-drag panning.
-  useEffect(() => {
-    const isTyping = (t: EventTarget | null) =>
-      t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
-    const down = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && !isTyping(e.target)) {
-        e.preventDefault();
-        setSpaceHeld(true);
-      }
-    };
-    const up = (e: KeyboardEvent) => {
-      if (e.code === 'Space') setSpaceHeld(false);
-    };
-    const blur = () => setSpaceHeld(false);
-    window.addEventListener('keydown', down);
-    window.addEventListener('keyup', up);
-    window.addEventListener('blur', blur);
-    return () => {
-      window.removeEventListener('keydown', down);
-      window.removeEventListener('keyup', up);
-      window.removeEventListener('blur', blur);
-    };
-  }, []);
 
   const toWorld = useCallback(
     (e: { clientX: number; clientY: number }): Vec2 => {
       const rect = svgRef.current?.getBoundingClientRect();
       return screenToWorld(vp, { x: e.clientX - (rect?.left ?? 0), y: e.clientY - (rect?.top ?? 0) });
     },
-    [vp],
+    [vp, svgRef],
   );
 
   const startPan = (e: ReactPointerEvent) => {
@@ -196,7 +99,7 @@ export function PlanView() {
     if (!drag || drag.pointerId !== e.pointerId) return;
 
     if (drag.kind === 'pan') {
-      setVp((v) => pan(v, e.clientX - drag.lastX, e.clientY - drag.lastY));
+      updateViewport((v) => pan(v, e.clientX - drag.lastX, e.clientY - drag.lastY));
       setDrag({ ...drag, lastX: e.clientX, lastY: e.clientY });
       return;
     }
@@ -297,10 +200,7 @@ export function PlanView() {
         {draggingId && <DimensionGuides layout={layout} vp={vp} id={draggingId} />}
       </svg>
       <ScaleBar scale={vp.scale} />
-      <ZoomControls
-        scale={vp.scale}
-        onZoom={(f) => size && setVp((v) => zoomAt(v, { x: size.w / 2, y: size.h / 2 }, f))}
-      />
+      <ZoomControls scale={vp.scale} onZoom={zoomBy} />
     </div>
   );
 }
@@ -469,7 +369,7 @@ function ScaleBar({ scale }: { scale: number }) {
 }
 
 function ZoomControls({ scale, onZoom }: { scale: number; onZoom: (factor: number) => void }) {
-  const { requestFit, requestZoom } = useStore.getState();
+  const { sendViewCommand } = useStore.getState();
   return (
     <div className={styles.zoomControls}>
       <button type="button" onClick={() => onZoom(1 / 1.25)} title="Zoom out" aria-label="Zoom out">
@@ -480,10 +380,10 @@ function ZoomControls({ scale, onZoom }: { scale: number; onZoom: (factor: numbe
         <Icon name="plus" size={14} />
       </button>
       <span className={styles.sep} />
-      <button type="button" onClick={requestFit} title="Zoom to fit (F)">
+      <button type="button" onClick={() => sendViewCommand({ kind: 'fit' })} title="Zoom to fit (F)">
         <Icon name="fit" size={14} /> Fit
       </button>
-      <button type="button" onClick={() => requestZoom(1)} title="100 %: 1 mm = 1 CSS pixel">
+      <button type="button" onClick={() => sendViewCommand({ kind: 'zoom', scale: 1 })} title="100 %: 1 mm = 1 CSS pixel">
         1:1
       </button>
     </div>
