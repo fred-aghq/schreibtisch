@@ -43,19 +43,28 @@ npm run check      # typecheck + lint + tests
 npm run build      # production build in dist/
 ```
 
-Pure geometry and maths live in `src/geometry` and are unit-tested with Vitest. React components never do maths inline.
+Non-trivial maths lives in `src/geometry` and `src/layout` and is unit-tested with Vitest. Components only do simple layout arithmetic (placing an SVG element, padding a label).
+
+Dependencies point one way: `lib` / `geometry` → `model` → `layout` → `store` → `views`, `ui`.
 
 ```
 src/
-  geometry/       pure TS: units, transforms, OBB/SAT, snapping, guides, overlaps, monitor generator,
-                  viewport, rays, camera presets, expression parser (+ tests)
-  model/          types, defaults, built-in presets, schema migration, validation
-  store/          zustand store, transactional undo history, layout ops, persistence
+  lib/            small helpers: debounce, number/mm formatting, the field expression parser ("300+45"), DOM checks
+  geometry/       domain-free maths: vectors, angles, transforms, oriented boxes (SAT), rays, the 2D viewport,
+                  the monitor panel generator
+  model/          types, zod schemas, migrations, defaults, presets, categories, and the pure layout
+                  ops (move, mirror pairs, duplicate, delete, …)
+  layout/         layout-aware computations: scene bounds and visible items, snapping, overlaps, dimension
+                  guides, desk grid, listener body, camera poses, and the drag core shared by both views
+  store/          zustand store (document + UI + view state), transactional undo history, commands,
+                  persistence, and initStore() (loading and autosave)
   views/plan2d/   SVG top-down view
   views/scene3d/  react-three-fiber 3D view (lazy-loaded)
   ui/             panels and inputs
   app/            shell, theme, keyboard shortcuts
 ```
+
+Saved and imported layouts go through `model/migrate.ts`: older schema versions are upgraded step by step, missing fields are filled with defaults, and the result is validated against `model/schema.ts`.
 
 ## Deployment
 
