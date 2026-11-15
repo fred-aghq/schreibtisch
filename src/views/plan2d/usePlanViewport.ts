@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { layoutAabb } from '../../geometry/scene';
-import { classifyWheel, fitBounds, pan, zoomAt, zoomTo } from '../../geometry/viewport';
+import { layoutAabb } from '../../layout/scene';
+import { fitBounds, pan, zoomAt, zoomTo } from '../../geometry/viewport';
+import { classifyWheel } from './wheel';
 import type { Viewport } from '../../geometry/viewport';
 import { isTypingTarget } from '../../lib/dom';
 import { useStore } from '../../store/store';

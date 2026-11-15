@@ -56,11 +56,6 @@ export function unionAabb(boxes: readonly AABB[]): AABB | null {
   }));
 }
 
-export function pointInObb(p: Vec2, b: OBB): boolean {
-  const local = rotatePlan({ x: p.x - b.center.x, z: p.z - b.center.z }, -b.yaw);
-  return Math.abs(local.x) <= b.halfW && Math.abs(local.z) <= b.halfD;
-}
-
 /**
  * Separating Axis Theorem test for two oriented rectangles.
  * Touching edges (zero-area contact, within `eps`) do not count as overlapping.

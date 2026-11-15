@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { MM_PER_INCH } from '../geometry/monitor';
 import { CATEGORY_INFO } from '../model/categories';
 import { newId } from '../model/ids';
-import { presetFromDefinition } from '../model/presets';
+import { ASPECT_RATIOS, presetFromDefinition } from '../model/presets';
 import type { AspectRatio, Layout, ObjectDefinition, ObjectInstance } from '../model/types';
 import {
   countInstancesOf,
@@ -207,14 +208,12 @@ function InstanceInspector({ layout, inst, def }: { layout: Layout; inst: Object
   );
 }
 
-const ASPECTS: AspectRatio[] = ['16:9', '16:10', '21:9', '32:9'];
-
 function MonitorSection({ def, inst }: { def: ObjectDefinition; inst: ObjectInstance }) {
   const apply = useStore((s) => s.apply);
   const m = def.monitor;
   const bezelMm = m?.bezelMm ?? 8;
   const current: MonitorEdit = {
-    diagonalIn: m?.diagonalIn ?? Math.round((Math.hypot(def.size.w - 2 * bezelMm, def.size.h - 2 * bezelMm) / 25.4) * 10) / 10,
+    diagonalIn: m?.diagonalIn ?? Math.round((Math.hypot(def.size.w - 2 * bezelMm, def.size.h - 2 * bezelMm) / MM_PER_INCH) * 10) / 10,
     aspect: m?.aspect ?? '16:9',
     bezelMm,
     panelDepth: def.size.d,
@@ -242,7 +241,7 @@ function MonitorSection({ def, inst }: { def: ObjectDefinition; inst: ObjectInst
       <label className={p.selectField}>
         Aspect
         <select className={p.select} value={current.aspect} onChange={(e) => regen({ aspect: e.currentTarget.value as AspectRatio })}>
-          {ASPECTS.map((a) => (
+          {ASPECT_RATIOS.map((a) => (
             <option key={a}>{a}</option>
           ))}
         </select>

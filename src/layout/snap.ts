@@ -1,8 +1,8 @@
 import type { Layout } from '../model/types';
 import { instanceObb, listenerPlan } from './scene';
-import { obbAabb } from './obb';
-import { degToRad, snapTo } from './units';
-import type { Vec2 } from './vec';
+import { obbAabb } from '../geometry/obb';
+import { degToRad, snapTo } from '../geometry/math';
+import type { Vec2 } from '../geometry/vec';
 
 export type SnapKind = 'desk-edge' | 'centreline' | 'listener' | 'object-edge' | 'object-centre';
 

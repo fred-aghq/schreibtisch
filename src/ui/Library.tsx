@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { monitorSize } from '../geometry/monitor';
 import { CATEGORY_INFO } from '../model/categories';
-import { BUILT_IN_PRESETS, DEFAULT_MONITOR, monitorPreset, PRESET_GROUPS } from '../model/presets';
+import { ASPECT_RATIOS, BUILT_IN_PRESETS, DEFAULT_MONITOR, monitorPanelSize, monitorPreset, PRESET_GROUPS } from '../model/presets';
 import type { Preset } from '../model/presets';
 import type { AspectRatio } from '../model/types';
 import { addPreset } from '../store/commands';
@@ -12,8 +11,6 @@ import p from './panel.module.css';
 import s from './Sidebar.module.css';
 
 const add = (preset: Preset, pair: boolean) => addPreset(preset, { pair });
-
-const ASPECT_OPTIONS: AspectRatio[] = ['16:9', '16:10', '21:9', '32:9'];
 
 export function Library() {
   const userPresets = useStore((st) => st.userPresets);
@@ -85,7 +82,7 @@ export function Library() {
 
 function MonitorGenerator() {
   const [m, setM] = useState(DEFAULT_MONITOR);
-  const size = monitorSize(m);
+  const size = monitorPanelSize(m);
   return (
     <section className={`${s.group} ${s.card}`}>
       <h3 className={s.groupTitle}>Monitor</h3>
@@ -93,7 +90,7 @@ function MonitorGenerator() {
       <label className={p.selectField}>
         Aspect
         <select className={p.select} value={m.aspect} onChange={(e) => setM({ ...m, aspect: e.currentTarget.value as AspectRatio })}>
-          {ASPECT_OPTIONS.map((a) => (
+          {ASPECT_RATIOS.map((a) => (
             <option key={a}>{a}</option>
           ))}
         </select>

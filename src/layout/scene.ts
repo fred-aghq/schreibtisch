@@ -1,7 +1,7 @@
 import type { Layout, ObjectDefinition, ObjectInstance } from '../model/types';
-import type { AABB, OBB } from './obb';
-import { obbAabb, unionAabb } from './obb';
-import type { Vec2, Vec3 } from './vec';
+import type { AABB, OBB } from '../geometry/obb';
+import { obbAabb, unionAabb } from '../geometry/obb';
+import type { Vec2, Vec3 } from '../geometry/vec';
 
 /** Plan footprint of an instance as an oriented box. */
 export function instanceObb(inst: ObjectInstance, def: ObjectDefinition): OBB {

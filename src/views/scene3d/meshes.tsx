@@ -4,7 +4,7 @@ import type { ThreeEvent } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import { BufferGeometry, DoubleSide, Float32BufferAttribute } from 'three';
 import type { Group } from 'three';
-import { CHAIR, floorY, listenerHead } from '../../geometry/scene';
+import { CHAIR, floorY, listenerHead } from '../../layout/scene';
 import { objectEuler } from '../../geometry/transform';
 import type { Layout, ObjectDefinition, ObjectInstance } from '../../model/types';
 import type { DragTarget } from './dragController';

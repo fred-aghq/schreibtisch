@@ -1,19 +1,11 @@
 import type { Layout } from '../model/types';
 import { layoutAabb, listenerHead } from './scene';
-import { degToRad } from './units';
-import type { Vec3 } from './vec';
-import { add3, len3, normalize3, scale3, sub3 } from './vec3';
+import { degToRad } from '../geometry/math';
+import type { Vec3 } from '../geometry/vec';
+import { add3, len3, normalize3, scale3, sub3 } from '../geometry/vec';
 
 export const CAMERA_PRESETS = ['top', 'front', 'side', 'iso', 'seated'] as const;
 export type CameraPreset = (typeof CAMERA_PRESETS)[number];
-
-export const PRESET_LABELS: Record<CameraPreset, string> = {
-  top: 'Top',
-  front: 'Front',
-  side: 'Side',
-  iso: 'Isometric',
-  seated: 'Seated',
-};
 
 export interface CameraPose {
   position: Vec3;

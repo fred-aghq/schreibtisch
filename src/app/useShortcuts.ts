@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { isTypingTarget } from '../lib/dom';
-import { CAMERA_PRESETS } from '../geometry/camera';
+import { CAMERA_PRESETS } from '../layout/cameraPoses';
 import { deleteSelected, duplicateSelected, nudgeSelected, rotateSelected } from '../store/commands';
 import { useStore } from '../store/store';
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createDefaultLayout } from '../model/defaults';
-import { cameraPose, easeInOut, fitDistance, fitPose, presetDirection, sceneSphere, seatedPose } from './camera';
-import { len3, sub3 } from './vec3';
+import { cameraPose, easeInOut, fitDistance, fitPose, presetDirection, sceneSphere, seatedPose } from './cameraPoses';
+import { len3, sub3 } from '../geometry/vec';
 
 describe('camera maths', () => {
   const layout = createDefaultLayout();

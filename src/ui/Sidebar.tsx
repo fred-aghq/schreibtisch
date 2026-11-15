@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { findOverlaps } from '../geometry/overlap';
+import { findOverlaps } from '../layout/overlap';
 import { CATEGORY_INFO } from '../model/categories';
 import { updateInstance } from '../model/ops';
 import { deleteObject, duplicateObject } from '../store/commands';

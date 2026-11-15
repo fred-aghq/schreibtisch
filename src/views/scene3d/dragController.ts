@@ -4,11 +4,11 @@ import { useCallback } from 'react';
 import { Raycaster, Vector2, Vector3 } from 'three';
 import { horizontalPlane, intersectRayPlane, verticalPlaneFacing } from '../../geometry/ray';
 import type { Plane, Ray } from '../../geometry/ray';
-import { listenerHead } from '../../geometry/scene';
-import { snapInstance, snapListener } from '../../geometry/snap';
-import { snapTo } from '../../geometry/units';
+import { listenerHead } from '../../layout/scene';
+import { snapInstance, snapListener } from '../../layout/snap';
+import { snapTo } from '../../geometry/math';
 import type { Vec3 } from '../../geometry/vec';
-import { add3, sub3 } from '../../geometry/vec3';
+import { add3, sub3 } from '../../geometry/vec';
 import { moveInstance, setListener } from '../../model/ops';
 import { useStore } from '../../store/store';
 

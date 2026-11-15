@@ -1,5 +1,5 @@
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import { CHAIR, listenerPlan } from '../../geometry/scene';
+import { CHAIR, listenerPlan } from '../../layout/scene';
 import type { Layout } from '../../model/types';
 import styles from './PlanView.module.css';
 

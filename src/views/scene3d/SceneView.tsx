@@ -2,9 +2,9 @@ import { OrbitControls } from '@react-three/drei';
 import { Canvas, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import { Raycaster, Vector2 } from 'three';
-import { CAMERA_PRESETS, PRESET_LABELS } from '../../geometry/camera';
-import type { CameraPreset } from '../../geometry/camera';
-import { findOverlaps } from '../../geometry/overlap';
+import { CAMERA_PRESETS } from '../../layout/cameraPoses';
+import type { CameraPreset } from '../../layout/cameraPoses';
+import { findOverlaps } from '../../layout/overlap';
 import { horizontalPlane, intersectRayPlane } from '../../geometry/ray';
 import { setSettings } from '../../model/ops';
 import { useLayout, useStore } from '../../store/store';
@@ -14,6 +14,7 @@ import { deskLabels } from './sceneLabels';
 import { SCENE_COLOURS } from './colours';
 import { useDragController } from './dragController';
 import { BackWall, Desk, DeskGrid, Floor, Listener3D, ObjectMesh } from './meshes';
+import { PRESET_LABELS } from './presetLabels';
 import styles from './SceneView.module.css';
 
 export default function SceneView() {

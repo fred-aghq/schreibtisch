@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { CameraPose, CameraPreset } from '../geometry/camera';
+import type { CameraPose, CameraPreset } from '../layout/cameraPoses';
 import type { Viewport } from '../geometry/viewport';
 import { createDefaultLayout } from '../model/defaults';
 import type { Layout } from '../model/types';

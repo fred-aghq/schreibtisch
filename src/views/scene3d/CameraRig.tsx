@@ -1,9 +1,9 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import type { PerspectiveCamera } from 'three';
-import { cameraPose, easeInOut, fitPose } from '../../geometry/camera';
-import type { CameraPose, CameraPreset } from '../../geometry/camera';
-import { lerp3 } from '../../geometry/vec3';
+import { cameraPose, easeInOut, fitPose } from '../../layout/cameraPoses';
+import type { CameraPose, CameraPreset } from '../../layout/cameraPoses';
+import { lerp3 } from '../../geometry/vec';
 import { useStore } from '../../store/store';
 
 interface OrbitLike {

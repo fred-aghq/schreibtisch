@@ -1,5 +1,5 @@
 import type { Layout, ObjectDefinition, ObjectInstance } from '../model/types';
-import { obbsOverlap } from './obb';
+import { obbsOverlap } from '../geometry/obb';
 import { instanceObb } from './scene';
 
 /** Things like desk mats are meant to have objects on top of them. */
