@@ -5,8 +5,6 @@ import { presetFromDefinition } from '../model/presets';
 import type { AspectRatio, Layout, ObjectDefinition, ObjectInstance } from '../model/types';
 import {
   countInstancesOf,
-  deleteInstance,
-  duplicateInstance,
   makeUnique,
   moveInstance,
   pairPartner,
@@ -20,6 +18,7 @@ import {
   updateInstance,
 } from '../model/ops';
 import type { InstancePatch, MonitorEdit, PosePatch } from '../model/ops';
+import { deleteObject, duplicateObject } from '../store/commands';
 import { useLayout, useStore } from '../store/store';
 import { Icon } from './Icon';
 import { NumberField } from './NumberField';
@@ -177,15 +176,7 @@ function InstanceInspector({ layout, inst, def }: { layout: Layout; inst: Object
             type="button"
             className={p.button}
             title="Duplicate (Ctrl+D)"
-            onClick={() => {
-              let id = inst.id;
-              apply((l) => {
-                const r = duplicateInstance(l, inst.id);
-                id = r.instanceId;
-                return r.layout;
-              });
-              select({ kind: 'instance', id });
-            }}
+            onClick={() => duplicateObject(inst.id)}
           >
             <Icon name="copy" size={14} /> Duplicate
           </button>
@@ -205,10 +196,7 @@ function InstanceInspector({ layout, inst, def }: { layout: Layout; inst: Object
             className={p.dangerButton}
             title="Delete (Del)"
             disabled={locked}
-            onClick={() => {
-              apply((l) => deleteInstance(l, inst.id));
-              select(null);
-            }}
+            onClick={() => deleteObject(inst.id)}
           >
             <Icon name="trash" size={14} /> Delete
           </button>

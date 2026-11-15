@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { findOverlaps } from '../geometry/overlap';
 import { CATEGORY_INFO } from '../model/categories';
-import { deleteInstance, duplicateInstance, updateInstance } from '../model/ops';
+import { updateInstance } from '../model/ops';
+import { deleteObject, duplicateObject } from '../store/commands';
 import { useLayout, useStore } from '../store/store';
 import { Icon } from './Icon';
 import { Library } from './Library';
@@ -107,13 +108,7 @@ function SceneList() {
                 aria-label={`Duplicate ${inst.label}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  let id = inst.id;
-                  apply((l) => {
-                    const r = duplicateInstance(l, inst.id);
-                    id = r.instanceId;
-                    return r.layout;
-                  });
-                  select({ kind: 'instance', id });
+                  duplicateObject(inst.id);
                 }}
               >
                 <Icon name="copy" size={14} />
@@ -126,8 +121,7 @@ function SceneList() {
                 disabled={inst.locked}
                 onClick={(e) => {
                   e.stopPropagation();
-                  apply((l) => deleteInstance(l, inst.id));
-                  if (sel) select(null);
+                  deleteObject(inst.id);
                 }}
               >
                 <Icon name="trash" size={14} />
