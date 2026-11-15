@@ -5,7 +5,7 @@ import { Raycaster, Vector2 } from 'three';
 import { CAMERA_PRESETS, PRESET_LABELS } from '../../geometry/camera';
 import { findOverlaps } from '../../geometry/overlap';
 import { horizontalPlane, intersectRayPlane } from '../../geometry/ray';
-import { setSettings } from '../../store/ops';
+import { setSettings } from '../../model/ops';
 import { useLayout, useStore } from '../../store/store';
 import { CameraRig } from './CameraRig';
 import { LabelLayer, LabelProjector } from './labels';

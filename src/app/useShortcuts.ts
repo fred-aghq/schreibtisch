@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { CAMERA_PRESETS } from '../geometry/camera';
-import { deleteInstance, duplicateInstance, moveInstance, setListener } from '../store/ops';
+import { deleteInstance, duplicateInstance, moveInstance, setListener } from '../model/ops';
 import { useStore } from '../store/store';
 
 function isTypingTarget(t: EventTarget | null): boolean {

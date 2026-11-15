@@ -11,14 +11,15 @@ import {
   moveInstance,
   pairPartner,
   regenerateMonitor,
+  setBackWall,
   setDesk,
   setListener,
   setSettings,
   unlinkPair,
   updateDefinition,
   updateInstance,
-} from '../store/ops';
-import type { InstancePatch, MonitorEdit } from '../store/ops';
+} from '../model/ops';
+import type { InstancePatch, MonitorEdit, PosePatch } from '../model/ops';
 import { useLayout, useStore } from '../store/store';
 import { Icon } from './Icon';
 import { NumberField } from './NumberField';
@@ -43,7 +44,7 @@ function InstanceInspector({ layout, inst, def }: { layout: Layout; inst: Object
   const addUserPreset = useStore((s) => s.addUserPreset);
   const [savedName, setSavedName] = useState<string | null>(null);
   const patch = (pt: InstancePatch) => apply((l) => updateInstance(l, inst.id, pt));
-  const move = (pt: Parameters<typeof moveInstance>[2]) => apply((l) => moveInstance(l, inst.id, pt));
+  const move = (pt: PosePatch) => apply((l) => moveInstance(l, inst.id, pt));
   const patchDef = (pt: Parameters<typeof updateDefinition>[2]) => apply((l) => updateDefinition(l, def.id, pt));
   const shared = countInstancesOf(layout, def.id);
   const partner = pairPartner(layout, inst.id);
@@ -353,7 +354,7 @@ function LayoutInspector({ layout }: { layout: Layout }) {
             checked={layout.backWall !== null}
             onChange={(e) => {
               const on = e.currentTarget.checked;
-              apply((l) => ({ ...l, backWall: on ? { distanceBehindDesk: 50 } : null }));
+              apply((l) => setBackWall(l, on ? { distanceBehindDesk: 50 } : null));
             }}
           />
           There is a wall behind the desk
@@ -363,7 +364,7 @@ function LayoutInspector({ layout }: { layout: Layout }) {
             label="Gap to wall"
             value={layout.backWall.distanceBehindDesk}
             min={0}
-            onCommit={(distanceBehindDesk) => apply((l) => ({ ...l, backWall: { distanceBehindDesk } }))}
+            onCommit={(distanceBehindDesk) => apply((l) => setBackWall(l, { distanceBehindDesk }))}
           />
         )}
       </div>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { findOverlaps } from '../geometry/overlap';
 import { CATEGORY_INFO } from '../model/categories';
-import { deleteInstance, duplicateInstance, updateInstance } from '../store/ops';
+import { deleteInstance, duplicateInstance, updateInstance } from '../model/ops';
 import { useLayout, useStore } from '../store/store';
 import { Icon } from './Icon';
 import { Library } from './Library';

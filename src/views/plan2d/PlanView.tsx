@@ -11,7 +11,7 @@ import type { Vec2 } from '../../geometry/vec';
 import { classifyWheel, fitBounds, pan, screenToWorld, worldToScreen, zoomAt, zoomTo } from '../../geometry/viewport';
 import type { Viewport } from '../../geometry/viewport';
 import type { Layout, ObjectDefinition, ObjectInstance } from '../../model/types';
-import { moveInstance, setListener } from '../../store/ops';
+import { moveInstance, setListener } from '../../model/ops';
 import { useLayout, useStore } from '../../store/store';
 import { Icon } from '../../ui/Icon';
 import { DeskShape, GridLines, ListenerShape } from './shapes';

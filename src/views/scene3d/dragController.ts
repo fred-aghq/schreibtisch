@@ -9,7 +9,7 @@ import { snapInstance, snapListener } from '../../geometry/snap';
 import { snapTo } from '../../geometry/units';
 import type { Vec3 } from '../../geometry/vec';
 import { add3, sub3 } from '../../geometry/vec3';
-import { moveInstance, setListener } from '../../store/ops';
+import { moveInstance, setListener } from '../../model/ops';
 import { useStore } from '../../store/store';
 
 export type DragTarget = { kind: 'object'; id: string } | { kind: 'listener' };

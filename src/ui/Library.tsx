@@ -4,7 +4,7 @@ import { CATEGORY_INFO } from '../model/categories';
 import { BUILT_IN_PRESETS, DEFAULT_MONITOR, monitorPreset, PRESET_GROUPS } from '../model/presets';
 import type { Preset } from '../model/presets';
 import type { AspectRatio } from '../model/types';
-import { addFromPreset } from '../store/ops';
+import { addFromPreset } from '../model/ops';
 import { useStore } from '../store/store';
 import { Icon } from './Icon';
 import { NumberField } from './NumberField';

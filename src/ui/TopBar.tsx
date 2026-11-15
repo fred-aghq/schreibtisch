@@ -1,4 +1,5 @@
 import { createDefaultLayout } from '../model/defaults';
+import { renameLayout } from '../model/ops';
 import { useLayout, useStore } from '../store/store';
 import { Icon } from './Icon';
 import s from './TopBar.module.css';
@@ -23,7 +24,7 @@ export function TopBar() {
           aria-label="Layout name"
           onChange={(e) => {
             const name = e.currentTarget.value;
-            apply((l) => ({ ...l, name }));
+            apply((l) => renameLayout(l, name));
           }}
         />
       </div>

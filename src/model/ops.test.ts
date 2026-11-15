@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { createDefaultLayout } from '../model/defaults';
-import { BUILT_IN_PRESETS } from '../model/presets';
-import { addFromPreset, countInstancesOf, deleteInstance, duplicateInstance, updateDefinition, updateInstance } from './ops';
+import { createDefaultLayout } from './defaults';
+import { BUILT_IN_PRESETS } from './presets';
+import {
+  addFromPreset,
+  countInstancesOf,
+  deleteInstance,
+  duplicateInstance,
+  moveInstance,
+  renameLayout,
+  setBackWall,
+  updateDefinition,
+  updateInstance,
+} from './ops';
 
 describe('layout ops', () => {
   it('updates an instance immutably and normalises yaw', () => {
@@ -54,5 +64,59 @@ describe('layout ops', () => {
     expect(copy.pairId).toBeUndefined();
     expect(copy.role).toBeNull();
     expect(copy.position.x).toBe(left.position.x + 20);
+  });
+});
+
+describe('locked instances', () => {
+  function lockedLayout() {
+    const l = createDefaultLayout();
+    const kb = l.instances.find((i) => i.label === 'Keyboard')!;
+    return { layout: updateInstance(l, kb.id, { locked: true }), id: kb.id };
+  }
+
+  it('cannot be moved or rotated', () => {
+    const { layout, id } = lockedLayout();
+    expect(moveInstance(layout, id, { position: { x: 500 } })).toBe(layout);
+    expect(moveInstance(layout, id, { rotation: { yaw: 45 } })).toBe(layout);
+  });
+
+  it('cannot be deleted', () => {
+    const { layout, id } = lockedLayout();
+    expect(deleteInstance(layout, id)).toBe(layout);
+  });
+
+  it('can still be relabelled, unlocked and duplicated', () => {
+    const { layout, id } = lockedLayout();
+    expect(updateInstance(layout, id, { label: 'KB' }).instances.find((i) => i.id === id)!.label).toBe('KB');
+    const unlocked = updateInstance(layout, id, { locked: false });
+    expect(moveInstance(unlocked, id, { position: { x: 500 } }).instances.find((i) => i.id === id)!.position.x).toBe(500);
+    const dup = duplicateInstance(layout, id);
+    expect(dup.layout.instances.find((i) => i.id === dup.instanceId)!.locked).toBe(false);
+  });
+
+  it('a locked partner does not block moving its unlocked twin', () => {
+    const l = createDefaultLayout();
+    const left = l.instances.find((i) => i.role === 'speakerL')!;
+    const right = l.instances.find((i) => i.role === 'speakerR')!;
+    const locked = updateInstance(l, right.id, { locked: true });
+    const moved = moveInstance(locked, left.id, { position: { x: -700 } });
+    expect(moved.instances.find((i) => i.id === left.id)!.position.x).toBe(-700);
+    expect(moved.instances.find((i) => i.id === right.id)!.position).toEqual(right.position);
+  });
+});
+
+describe('layout-level ops', () => {
+  it('sets and clears the back wall', () => {
+    const l = createDefaultLayout();
+    const on = setBackWall(l, { distanceBehindDesk: 80 });
+    expect(on.backWall).toEqual({ distanceBehindDesk: 80 });
+    expect(setBackWall(on, null).backWall).toBeNull();
+    expect(l.backWall).toBeNull();
+  });
+
+  it('renames, and returns the same layout for no change', () => {
+    const l = createDefaultLayout();
+    expect(renameLayout(l, 'Studio').name).toBe('Studio');
+    expect(renameLayout(l, l.name)).toBe(l);
   });
 });

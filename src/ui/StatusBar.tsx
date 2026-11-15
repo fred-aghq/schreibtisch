@@ -1,5 +1,5 @@
 import type { GridStep } from '../model/types';
-import { setSettings } from '../store/ops';
+import { setSettings } from '../model/ops';
 import { useLayout, useStore } from '../store/store';
 import s from './StatusBar.module.css';
 
