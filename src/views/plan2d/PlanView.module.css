@@ -1,0 +1,215 @@
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--canvas-bg);
+}
+
+.svg {
+  display: block;
+  touch-action: none;
+  user-select: none;
+  cursor: default;
+}
+
+.canPan {
+  cursor: grab;
+}
+
+.panning {
+  cursor: grabbing;
+}
+
+.dragging {
+  cursor: move;
+}
+
+.desk {
+  stroke: var(--desk-stroke);
+  stroke-width: 1;
+}
+
+.deskFront {
+  stroke: var(--accent);
+  stroke-width: 2;
+  opacity: 0.55;
+}
+
+.grid {
+  stroke: var(--grid);
+  stroke-width: 1;
+}
+
+.gridMajor {
+  stroke: var(--grid-strong);
+  stroke-width: 1;
+}
+
+.centreline {
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 6 5;
+  opacity: 0.5;
+}
+
+.wall {
+  stroke: var(--text-muted);
+  stroke-width: 3;
+}
+
+.object {
+  cursor: move;
+}
+
+.object rect,
+.object ellipse {
+  stroke: var(--object-stroke);
+  stroke-width: 1;
+  fill-opacity: 0.88;
+  transition: fill-opacity 0.1s;
+}
+
+.object:hover rect,
+.object:hover ellipse {
+  fill-opacity: 1;
+}
+
+.front {
+  stroke: var(--object-stroke);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.below rect,
+.below ellipse {
+  fill-opacity: 0.35;
+  stroke-dasharray: 5 4;
+}
+
+.locked {
+  cursor: default;
+}
+
+.selected rect,
+.selected ellipse {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  fill-opacity: 1;
+}
+
+.listener {
+  cursor: move;
+}
+
+.chair {
+  fill: none;
+  stroke: var(--listener);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+  opacity: 0.7;
+}
+
+.head {
+  fill: var(--listener);
+  stroke: var(--object-stroke);
+  stroke-width: 1;
+}
+
+.ear {
+  fill: var(--canvas-bg);
+}
+
+.listenerSelected .head {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.listenerSelected .chair {
+  stroke: var(--accent);
+  opacity: 1;
+}
+
+.labels text {
+  paint-order: stroke;
+  stroke: var(--label-halo);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.dim {
+  fill: var(--text-muted);
+  font-size: 11px;
+}
+
+.objLabel {
+  fill: var(--label);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.objLabelSel {
+  fill: var(--accent-strong);
+}
+
+.scaleBar {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 11px;
+  pointer-events: none;
+}
+
+.scaleBarLine {
+  height: 6px;
+  border: 1.5px solid var(--text-muted);
+  border-top: 0;
+}
+
+.zoomControls {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+}
+
+.zoomControls button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.zoomControls button:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.zoomPct {
+  min-width: 44px;
+  text-align: center;
+  color: var(--text);
+}
+
+.sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 3px;
+  background: var(--border);
+}
