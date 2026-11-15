@@ -1,7 +1,24 @@
+import { useState } from 'react';
 import { CATEGORY_INFO } from '../model/categories';
-import type { Layout, ObjectDefinition, ObjectInstance } from '../model/types';
-import { countInstancesOf, deleteInstance, duplicateInstance, setDesk, setListener, setSettings, updateDefinition, updateInstance } from '../store/ops';
-import type { InstancePatch } from '../store/ops';
+import { newId } from '../model/ids';
+import { presetFromDefinition } from '../model/presets';
+import type { AspectRatio, Layout, ObjectDefinition, ObjectInstance } from '../model/types';
+import {
+  countInstancesOf,
+  deleteInstance,
+  duplicateInstance,
+  makeUnique,
+  moveInstance,
+  pairPartner,
+  regenerateMonitor,
+  setDesk,
+  setListener,
+  setSettings,
+  unlinkPair,
+  updateDefinition,
+  updateInstance,
+} from '../store/ops';
+import type { InstancePatch, MonitorEdit } from '../store/ops';
 import { useLayout, useStore } from '../store/store';
 import { Icon } from './Icon';
 import { NumberField } from './NumberField';
@@ -23,9 +40,13 @@ export function Inspector() {
 function InstanceInspector({ layout, inst, def }: { layout: Layout; inst: ObjectInstance; def: ObjectDefinition }) {
   const apply = useStore((s) => s.apply);
   const select = useStore((s) => s.select);
+  const addUserPreset = useStore((s) => s.addUserPreset);
+  const [savedName, setSavedName] = useState<string | null>(null);
   const patch = (pt: InstancePatch) => apply((l) => updateInstance(l, inst.id, pt));
+  const move = (pt: Parameters<typeof moveInstance>[2]) => apply((l) => moveInstance(l, inst.id, pt));
   const patchDef = (pt: Parameters<typeof updateDefinition>[2]) => apply((l) => updateDefinition(l, def.id, pt));
   const shared = countInstancesOf(layout, def.id);
+  const partner = pairPartner(layout, inst.id);
   const locked = inst.locked;
 
   return (
@@ -52,25 +73,34 @@ function InstanceInspector({ layout, inst, def }: { layout: Layout; inst: Object
 
       <div className={p.section}>
         <h3 className={p.sectionTitle}>Size</h3>
-        {shared > 1 && <p className={p.note}>Shared by {shared} objects: changes apply to all of them.</p>}
+        {shared > 1 && (
+          <p className={p.note}>
+            Shared by {shared} objects: changes apply to all of them.{' '}
+            <button type="button" className={p.linkButton} onClick={() => apply((l) => makeUnique(l, inst.id))} title="Give this object its own copy of the definition">
+              Make unique
+            </button>
+          </p>
+        )}
         <NumberField label="Width" hint="X" value={def.size.w} min={1} onCommit={(w) => patchDef({ size: { w }, approx: false })} />
         <NumberField label="Depth" hint="Z" value={def.size.d} min={1} onCommit={(d) => patchDef({ size: { d }, approx: false })} />
         <NumberField label="Height" hint="Y" value={def.size.h} min={1} onCommit={(h) => patchDef({ size: { h }, approx: false })} />
       </div>
 
+      {def.category === 'monitor' && <MonitorSection def={def} inst={inst} />}
+
       <div className={p.section}>
         <h3 className={p.sectionTitle}>Position</h3>
-        <NumberField label="Left–right" hint="X" value={inst.position.x} disabled={locked} onCommit={(x) => patch({ position: { x } })} title="0 = desk centreline, + = right" />
-        <NumberField label="Front–back" hint="Z" value={inst.position.z} disabled={locked} onCommit={(z) => patch({ position: { z } })} title="0 = desk front edge, − = toward the back" />
-        <NumberField label="Elevation" hint="Y" value={inst.position.y} disabled={locked} onCommit={(y) => patch({ position: { y } })} title="0 = sitting on the desk, − = below the desk top" />
+        <NumberField label="Left–right" hint="X" value={inst.position.x} disabled={locked} onCommit={(x) => move({ position: { x } })} title="0 = desk centreline, + = right" />
+        <NumberField label="Front–back" hint="Z" value={inst.position.z} disabled={locked} onCommit={(z) => move({ position: { z } })} title="0 = desk front edge, − = toward the back" />
+        <NumberField label="Elevation" hint="Y" value={inst.position.y} disabled={locked} onCommit={(y) => move({ position: { y } })} title="0 = sitting on the desk, − = below the desk top" />
       </div>
 
       <div className={p.section}>
         <h3 className={p.sectionTitle}>Rotation</h3>
-        <NumberField label="Yaw" unit="°" value={inst.rotation.yaw} disabled={locked} onCommit={(yaw) => patch({ rotation: { yaw } })} title="0 = facing you, + = turned toward your right" />
+        <NumberField label="Yaw" unit="°" value={inst.rotation.yaw} disabled={locked} onCommit={(yaw) => move({ rotation: { yaw } })} title="0 = facing you, + = turned toward your right" />
         <details className={p.details}>
           <summary>Advanced</summary>
-          <NumberField label="Pitch (tilt)" unit="°" value={inst.rotation.pitch} min={-90} max={90} disabled={locked} onCommit={(pitch) => patch({ rotation: { pitch } })} title="+ = front tilted upward" />
+          <NumberField label="Pitch (tilt)" unit="°" value={inst.rotation.pitch} min={-90} max={90} disabled={locked} onCommit={(pitch) => move({ rotation: { pitch } })} title="+ = front tilted upward" />
           <label className={p.selectField}>
             Shape
             <select className={p.select} value={def.shape} onChange={(e) => patchDef({ shape: e.currentTarget.value === 'cylinder' ? 'cylinder' : 'box' })}>
@@ -84,6 +114,30 @@ function InstanceInspector({ layout, inst, def }: { layout: Layout; inst: Object
           </label>
         </details>
       </div>
+
+      {partner && (
+        <div className={p.section}>
+          <h3 className={p.sectionTitle}>Pair</h3>
+          <p className={p.note}>
+            Linked with <b>{partner.label}</b>. With mirroring on, moving or rotating either one mirrors the other across the listener&apos;s centreline.
+          </p>
+          <label className={p.checkbox}>
+            <input type="checkbox" checked={layout.settings.mirrorPairs} onChange={(e) => {
+              const mirrorPairs = e.currentTarget.checked;
+              apply((l) => setSettings(l, { mirrorPairs }));
+            }} />
+            Mirror pairs
+          </label>
+          <div className={p.row}>
+            <button type="button" className={p.button} onClick={() => select({ kind: 'instance', id: partner.id })}>
+              Select partner
+            </button>
+            <button type="button" className={p.button} onClick={() => apply((l) => unlinkPair(l, inst.id))}>
+              Unlink
+            </button>
+          </div>
+        </div>
+      )}
 
       {def.category === 'speaker' && (
         <div className={p.section}>
@@ -117,7 +171,7 @@ function InstanceInspector({ layout, inst, def }: { layout: Layout; inst: Object
           <input type="checkbox" checked={inst.visible} onChange={(e) => patch({ visible: e.currentTarget.checked })} />
           Visible
         </label>
-        <div className={p.row} style={{ marginTop: 8 }}>
+        <div className={p.row} style={{ marginTop: 8, flexWrap: 'wrap' }}>
           <button
             type="button"
             className={p.button}
@@ -136,6 +190,17 @@ function InstanceInspector({ layout, inst, def }: { layout: Layout; inst: Object
           </button>
           <button
             type="button"
+            className={p.button}
+            title="Keep this item (with its size) in the Library under My presets"
+            onClick={() => {
+              addUserPreset(presetFromDefinition(def, newId('preset'), inst.position.y));
+              setSavedName(def.name);
+            }}
+          >
+            Save as preset
+          </button>
+          <button
+            type="button"
             className={p.dangerButton}
             title="Delete (Del)"
             disabled={locked}
@@ -147,7 +212,66 @@ function InstanceInspector({ layout, inst, def }: { layout: Layout; inst: Object
             <Icon name="trash" size={14} /> Delete
           </button>
         </div>
+        {savedName && <p className={p.note}>Saved “{savedName}” to Library → My presets.</p>}
       </div>
+    </div>
+  );
+}
+
+const ASPECTS: AspectRatio[] = ['16:9', '16:10', '21:9', '32:9'];
+
+function MonitorSection({ def, inst }: { def: ObjectDefinition; inst: ObjectInstance }) {
+  const apply = useStore((s) => s.apply);
+  const m = def.monitor;
+  const bezelMm = m?.bezelMm ?? 8;
+  const current: MonitorEdit = {
+    diagonalIn: m?.diagonalIn ?? Math.round((Math.hypot(def.size.w - 2 * bezelMm, def.size.h - 2 * bezelMm) / 25.4) * 10) / 10,
+    aspect: m?.aspect ?? '16:9',
+    bezelMm,
+    panelDepth: def.size.d,
+    support: m?.support ?? 'mount',
+    ...(m?.stand ? { stand: m.stand } : {}),
+  };
+  const regen = (pt: Partial<MonitorEdit>) => {
+    const next = { ...current, ...pt };
+    apply((l) => {
+      let out = regenerateMonitor(l, def.id, next);
+      // Lift the panel onto a newly added stand so the stand is visible.
+      if (pt.support === 'stand' && inst.position.y <= 0) {
+        const stand = out.definitions[def.id]?.monitor?.stand;
+        if (stand) out = moveInstance(out, inst.id, { position: { y: stand.h } });
+      }
+      return out;
+    });
+  };
+  const stand = m?.support === 'stand' ? m.stand : undefined;
+  return (
+    <div className={p.section}>
+      <h3 className={p.sectionTitle}>Monitor</h3>
+      <p className={p.note}>Changing these recomputes the panel size.</p>
+      <NumberField label="Diagonal" unit="in" decimals={1} step={0.5} min={5} max={100} value={current.diagonalIn} onCommit={(diagonalIn) => regen({ diagonalIn })} />
+      <label className={p.selectField}>
+        Aspect
+        <select className={p.select} value={current.aspect} onChange={(e) => regen({ aspect: e.currentTarget.value as AspectRatio })}>
+          {ASPECTS.map((a) => (
+            <option key={a}>{a}</option>
+          ))}
+        </select>
+      </label>
+      <NumberField label="Bezel" value={current.bezelMm} min={0} onCommit={(b) => regen({ bezelMm: b })} />
+      <label className={p.selectField}>
+        Support
+        <select className={p.select} value={current.support} onChange={(e) => regen({ support: e.currentTarget.value === 'stand' ? 'stand' : 'mount' })}>
+          <option value="mount">Arm / mount</option>
+          <option value="stand">Stand</option>
+        </select>
+      </label>
+      {stand && (
+        <>
+          <NumberField label="Stand base width" value={stand.w} min={10} onCommit={(w) => regen({ stand: { ...stand, w } })} />
+          <NumberField label="Stand base depth" value={stand.d} min={10} onCommit={(d) => regen({ stand: { ...stand, d } })} />
+        </>
+      )}
     </div>
   );
 }

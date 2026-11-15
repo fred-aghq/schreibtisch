@@ -9,7 +9,7 @@ export function TopBar() {
   const canRedo = useStore((st) => st.history.future.length > 0);
   const view = useStore((st) => st.view);
   const theme = useStore((st) => st.theme);
-  const { apply, undo, redo, setView, toggleTheme, replaceLayout, requestFit } = useStore.getState();
+  const { apply, undo, redo, setView, toggleTheme, replaceLayout, requestFit, setShowShortcuts } = useStore.getState();
 
   return (
     <header className={s.bar}>
@@ -32,7 +32,7 @@ export function TopBar() {
         <button type="button" className={view === '2d' ? s.segOn : s.seg} onClick={() => setView('2d')}>
           2D
         </button>
-        <button type="button" className={view === '3d' ? s.segOn : s.seg} onClick={() => setView('3d')} title="Coming in milestone 2">
+        <button type="button" className={view === '3d' ? s.segOn : s.seg} onClick={() => setView('3d')}>
           3D
         </button>
       </div>
@@ -57,6 +57,9 @@ export function TopBar() {
           }}
         >
           Reset
+        </button>
+        <button type="button" className={s.icon} onClick={() => setShowShortcuts(true)} title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">
+          ?
         </button>
         <button type="button" className={s.icon} onClick={toggleTheme} title={theme === 'dark' ? 'Light mode' : 'Dark mode'} aria-label="Toggle theme">
           <Icon name={theme === 'dark' ? 'sun' : 'moon'} />

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { CAMERA_PRESETS } from '../geometry/camera';
-import { deleteInstance, duplicateInstance, setListener, updateInstance } from '../store/ops';
+import { deleteInstance, duplicateInstance, moveInstance, setListener } from '../store/ops';
 import { useStore } from '../store/store';
 
 function isTypingTarget(t: EventTarget | null): boolean {
@@ -32,7 +32,12 @@ export function useShortcuts(): void {
       const layout = s.history.present;
 
       if (key === 'escape') {
-        s.select(null);
+        if (s.showShortcuts) s.setShowShortcuts(false);
+        else s.select(null);
+        return;
+      }
+      if (e.key === '?') {
+        s.setShowShortcuts(!s.showShortcuts);
         return;
       }
       if (!mod && key === 'f') {
@@ -66,7 +71,7 @@ export function useShortcuts(): void {
         } else {
           const inst = layout.instances.find((i) => i.id === sel.id);
           if (inst && !inst.locked) {
-            s.apply((l) => updateInstance(l, inst.id, { position: { x: inst.position.x + dx * step, z: inst.position.z + dz * step } }));
+            s.apply((l) => moveInstance(l, inst.id, { position: { x: inst.position.x + dx * step, z: inst.position.z + dz * step } }));
           }
         }
         return;
@@ -80,7 +85,7 @@ export function useShortcuts(): void {
       if (!mod && (key === 'q' || key === 'e') && !inst.locked) {
         const step = e.shiftKey ? 15 : 1;
         const dir = key === 'q' ? 1 : -1;
-        s.apply((l) => updateInstance(l, inst.id, { rotation: { yaw: inst.rotation.yaw + dir * step } }));
+        s.apply((l) => moveInstance(l, inst.id, { rotation: { yaw: inst.rotation.yaw + dir * step } }));
         return;
       }
       if (mod && key === 'd') {

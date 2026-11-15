@@ -3,6 +3,7 @@ import { Canvas, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import { Raycaster, Vector2 } from 'three';
 import { CAMERA_PRESETS, PRESET_LABELS } from '../../geometry/camera';
+import { findOverlaps } from '../../geometry/overlap';
 import { horizontalPlane, intersectRayPlane } from '../../geometry/ray';
 import { setSettings } from '../../store/ops';
 import { useLayout, useStore } from '../../store/store';
@@ -72,6 +73,7 @@ function SceneContent() {
   const colours = SCENE_COLOURS[theme];
   const startDrag = useDragController();
   const selectedId = selection?.kind === 'instance' ? selection.id : null;
+  const overlaps = useMemo(() => findOverlaps(layout), [layout]);
   const shadowExtent = useMemo(() => Math.max(layout.desk.width, layout.desk.depth) + 1500, [layout.desk.width, layout.desk.depth]);
 
   return (
@@ -100,7 +102,7 @@ function SceneContent() {
       {layout.instances.map((inst) => {
         const def = layout.definitions[inst.definitionId];
         if (!def || !inst.visible) return null;
-        return <ObjectMesh key={inst.id} inst={inst} def={def} selected={inst.id === selectedId} colours={colours} startDrag={startDrag} />;
+        return <ObjectMesh key={inst.id} inst={inst} def={def} selected={inst.id === selectedId} overlapping={overlaps.has(inst.id)} colours={colours} startDrag={startDrag} />;
       })}
       <Listener3D layout={layout} selected={selection?.kind === 'listener'} colours={colours} startDrag={startDrag} />
     </>

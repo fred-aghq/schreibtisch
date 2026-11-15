@@ -1,7 +1,7 @@
 import type { Theme } from '../../store/persistence';
 
 /** Scene colours that can't come from CSS variables (WebGL materials). */
-export const SCENE_COLOURS: Record<Theme, { floor: string; floorGrid: string; floorGridMajor: string; wall: string; legs: string; listener: string; accent: string; screen: string; driver: string }> = {
+export const SCENE_COLOURS: Record<Theme, { floor: string; floorGrid: string; floorGridMajor: string; wall: string; legs: string; listener: string; accent: string; screen: string; driver: string; danger: string }> = {
   dark: {
     floor: '#151a20',
     floorGrid: '#232a33',
@@ -12,6 +12,7 @@ export const SCENE_COLOURS: Record<Theme, { floor: string; floorGrid: string; fl
     accent: '#6ea8fe',
     screen: '#0b0d10',
     driver: '#1a1c20',
+    danger: '#f07178',
   },
   light: {
     floor: '#dfe3e8',
@@ -23,5 +24,6 @@ export const SCENE_COLOURS: Record<Theme, { floor: string; floorGrid: string; fl
     accent: '#2f6fde',
     screen: '#14171c',
     driver: '#22252a',
+    danger: '#d6454f',
   },
 };

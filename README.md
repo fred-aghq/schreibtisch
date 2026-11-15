@@ -24,7 +24,15 @@ Everything runs in the browser. There is no backend, and layouts are saved to `l
 | Fit | **F** | **F** |
 | Camera presets | | **1** Top, **2** Front, **3** Side, **4** Isometric, **5** Seated |
 
-Other shortcuts: arrows nudge 1 mm (Shift = 10 mm), Q/E rotate 1° (Shift = 15°), Ctrl+D duplicate, Del delete, Ctrl+Z / Ctrl+Shift+Z undo/redo, Esc deselect.
+Other shortcuts: arrows nudge 1 mm (Shift = 10 mm), Q/E rotate 1° (Shift = 15°), Ctrl+D duplicate, Del delete, Ctrl+Z / Ctrl+Shift+Z undo/redo, Esc deselect, **?** cheat sheet.
+
+### Definitions, instances and pairs
+
+- A **definition** is a reusable template (size, colour, speaker/monitor details). An **instance** is one placement of a definition. Editing a size changes every instance that shares the definition. Use **Make unique** to give one instance its own copy.
+- **Pairs:** speakers are added as a linked left/right pair (any library item can be added with **Pair**). With **Mirror pairs** on, moving or rotating one mirrors the other across the listener's centreline (x mirrored, yaw negated). **Unlink** breaks the link.
+- **Snapping:** objects snap to desk edges, the desk centreline, the listener's centreline, and other objects' edges and centres. When nothing is in range they snap to the grid (1/5/10/50 mm). Hold **Alt** to bypass.
+- **Overlap warnings:** objects whose footprints intersect (as oriented boxes) get a red outline, but only if they also overlap in height. Desk mats are ignored.
+- **Save as preset** keeps any object in Library → My presets (stored in your browser).
 
 ## Development
 
@@ -39,8 +47,9 @@ Pure geometry and maths live in `src/geometry` and are unit-tested with Vitest. 
 
 ```
 src/
-  geometry/       pure TS: units, transforms, OBB/SAT, viewport, rays, camera presets, expression parser (+ tests)
-  model/          types, defaults, schema migration, validation
+  geometry/       pure TS: units, transforms, OBB/SAT, snapping, guides, overlaps, monitor generator,
+                  viewport, rays, camera presets, expression parser (+ tests)
+  model/          types, defaults, built-in presets, schema migration, validation
   store/          zustand store, transactional undo history, layout ops, persistence
   views/plan2d/   SVG top-down view
   views/scene3d/  react-three-fiber 3D view (lazy-loaded)
