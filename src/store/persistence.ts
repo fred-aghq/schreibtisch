@@ -1,5 +1,5 @@
 import { migrateLayout } from '../model/migrate';
-import { CATEGORIES } from '../model/types';
+import { parseWith, PresetSchema } from '../model/schema';
 import type { Layout } from '../model/types';
 import type { Preset } from '../model/presets';
 import type { Theme } from './store';
@@ -54,27 +54,17 @@ export function saveTheme(theme: Theme): void {
   }
 }
 
-function isPreset(v: unknown): v is Preset {
-  if (typeof v !== 'object' || v === null) return false;
-  const p = v as Record<string, unknown>;
-  const size = p.size as Record<string, unknown> | undefined;
-  return (
-    typeof p.id === 'string' &&
-    typeof p.name === 'string' &&
-    typeof p.category === 'string' &&
-    (CATEGORIES as readonly string[]).includes(p.category) &&
-    typeof size === 'object' &&
-    size !== null &&
-    ['w', 'd', 'h'].every((k) => typeof size[k] === 'number' && (size[k] as number) > 0)
-  );
-}
-
 export function loadUserPresets(): Preset[] {
   try {
     const raw = storage()?.getItem(PRESETS_KEY);
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter(isPreset).map((p) => ({ ...p, group: 'My presets' as const })) : [];
+    if (!Array.isArray(parsed)) return [];
+    // Skip anything that doesn't validate rather than losing every preset to one bad entry.
+    return parsed.flatMap((p: unknown) => {
+      const r = parseWith(PresetSchema, typeof p === 'object' && p !== null ? { approx: false, ...p, group: 'My presets' } : p);
+      return r.ok ? [r.value] : [];
+    });
   } catch {
     return [];
   }
