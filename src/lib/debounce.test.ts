@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { debounce } from './persistence';
+import { debounce } from './debounce';
 
 describe('debounce', () => {
   afterEach(() => vi.useRealTimers());

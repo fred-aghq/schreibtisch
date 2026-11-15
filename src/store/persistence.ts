@@ -2,6 +2,7 @@ import { migrateLayout } from '../model/migrate';
 import { CATEGORIES } from '../model/types';
 import type { Layout } from '../model/types';
 import type { Preset } from '../model/presets';
+import type { Theme } from './store';
 
 const CURRENT_KEY = 'schreibtisch:current-layout';
 const THEME_KEY = 'schreibtisch:theme';
@@ -37,8 +38,6 @@ export function saveCurrentLayout(layout: Layout): void {
   }
 }
 
-export type Theme = 'dark' | 'light';
-
 export function loadTheme(): Theme {
   try {
     return storage()?.getItem(THEME_KEY) === 'light' ? 'light' : 'dark';
@@ -53,33 +52,6 @@ export function saveTheme(theme: Theme): void {
   } catch {
     /* ignore */
   }
-}
-
-export interface Debounced<A extends unknown[]> {
-  (...args: A): void;
-  /** Run any pending call immediately. */
-  flush: () => void;
-}
-
-export function debounce<A extends unknown[]>(fn: (...args: A) => void, ms: number): Debounced<A> {
-  let t: ReturnType<typeof setTimeout> | undefined;
-  let pending: A | null = null;
-  const run = () => {
-    if (t !== undefined) clearTimeout(t);
-    t = undefined;
-    if (pending) {
-      const args = pending;
-      pending = null;
-      fn(...args);
-    }
-  };
-  const d = (...args: A) => {
-    pending = args;
-    if (t !== undefined) clearTimeout(t);
-    t = setTimeout(run, ms);
-  };
-  d.flush = run;
-  return d;
 }
 
 function isPreset(v: unknown): v is Preset {

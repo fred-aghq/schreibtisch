@@ -1,4 +1,4 @@
-import type { Theme } from '../../store/persistence';
+import type { Theme } from '../../store/store';
 
 /** Scene colours that can't come from CSS variables (WebGL materials). */
 export const SCENE_COLOURS: Record<Theme, { floor: string; floorGrid: string; floorGridMajor: string; wall: string; legs: string; listener: string; accent: string; screen: string; driver: string; danger: string }> = {

@@ -5,9 +5,9 @@ import { createDefaultLayout } from '../model/defaults';
 import type { Layout } from '../model/types';
 import * as H from './history';
 import type { Preset } from '../model/presets';
-import { debounce, loadCurrentLayout, loadTheme, loadUserPresets, saveCurrentLayout, saveTheme, saveUserPresets } from './persistence';
-import type { Theme } from './persistence';
+import { saveTheme, saveUserPresets } from './persistence';
 
+export type Theme = 'dark' | 'light';
 export type Selection = { kind: 'instance'; id: string } | { kind: 'listener' } | null;
 export type ViewMode = '2d' | '3d';
 export type SidebarTab = 'library' | 'scene';
@@ -73,13 +73,15 @@ export interface AppState {
   setShowShortcuts: (show: boolean) => void;
 }
 
-const initialLayout = loadCurrentLayout() ?? createDefaultLayout();
-
+/**
+ * The app store: the layout document (with undo history), UI state and view state. Creating it
+ * has no side effects; `initStore()` (store/init.ts) loads saved data and starts autosave.
+ */
 export const useStore = create<AppState>()((set, get) => ({
-  history: H.createHistory(initialLayout),
+  history: H.createHistory(createDefaultLayout()),
   selection: null,
   view: '2d',
-  theme: loadTheme(),
+  theme: 'dark',
   sidebarTab: 'scene',
   zoom: 1,
   cursor: null,
@@ -88,7 +90,7 @@ export const useStore = create<AppState>()((set, get) => ({
   planViewport: null,
   cameraPose: null,
   activePreset: null,
-  userPresets: loadUserPresets(),
+  userPresets: [],
   showShortcuts: false,
 
   apply: (recipe) => set((s) => ({ history: H.commit(s.history, recipe(s.history.present)) })),
@@ -142,16 +144,3 @@ export const useStore = create<AppState>()((set, get) => ({
 
 /** Current layout selector. */
 export const useLayout = (): Layout => useStore((s) => s.history.present);
-
-// Debounced autosave whenever the layout changes.
-const autosave = debounce(saveCurrentLayout, 400);
-useStore.subscribe((state, prev) => {
-  if (state.history.present !== prev.history.present) autosave(state.history.present);
-});
-// Never lose the last edit to a quick reload or tab close.
-if (typeof window !== 'undefined') {
-  window.addEventListener('pagehide', autosave.flush);
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') autosave.flush();
-  });
-}
