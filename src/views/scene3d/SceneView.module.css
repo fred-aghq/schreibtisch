@@ -1,0 +1,101 @@
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--canvas-bg);
+  overflow: hidden;
+}
+
+.container canvas {
+  touch-action: none;
+}
+
+.toolbar {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  white-space: nowrap;
+}
+
+.toolbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.toolbar button:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.toolbar button.on {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.key {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+.sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 3px;
+  background: var(--border);
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  color: var(--text-muted);
+}
+
+.toggle input {
+  accent-color: var(--accent);
+}
+
+.hint {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  right: 14px;
+  color: var(--text-faint);
+  font-size: 11.5px;
+  pointer-events: none;
+  text-shadow: 0 0 6px var(--canvas-bg);
+}
+
+.hint b {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.dimLabel {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--label-halo);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { CAMERA_PRESETS } from '../geometry/camera';
 import { deleteInstance, duplicateInstance, setListener, updateInstance } from '../store/ops';
 import { useStore } from '../store/store';
 
@@ -35,7 +36,16 @@ export function useShortcuts(): void {
         return;
       }
       if (!mod && key === 'f') {
-        s.requestFit();
+        if (s.view === '3d') s.requestCamera('fit');
+        else s.requestFit();
+        return;
+      }
+      // Number keys: camera presets (switches to 3D).
+      const presetIndex = !mod && !e.altKey ? Number.parseInt(e.key, 10) - 1 : -1;
+      const preset = CAMERA_PRESETS[presetIndex];
+      if (preset) {
+        s.setView('3d');
+        s.requestCamera(preset);
         return;
       }
 

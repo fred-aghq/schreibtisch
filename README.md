@@ -12,6 +12,20 @@ Everything runs in the browser. There is no backend, and layouts are saved to `l
 - **Object position** is the bottom-centre of its footprint. Elevation 0 means it sits on the desk.
 - **Yaw:** 0° means the object's front faces you. Positive values turn it toward your right (counter-clockwise seen from above).
 
+## Using it
+
+| Action | 2D plan | 3D |
+|---|---|---|
+| Select | click | click |
+| Move | drag (Alt = no snap) | drag on the horizontal plane; **Shift**+drag changes height |
+| Pan | drag empty space, Space+drag, middle mouse, two-finger scroll | right-drag |
+| Zoom | mouse wheel / pinch (toward cursor) | scroll |
+| Orbit | | drag empty space |
+| Fit | **F** | **F** |
+| Camera presets | | **1** Top, **2** Front, **3** Side, **4** Isometric, **5** Seated |
+
+Other shortcuts: arrows nudge 1 mm (Shift = 10 mm), Q/E rotate 1° (Shift = 15°), Ctrl+D duplicate, Del delete, Ctrl+Z / Ctrl+Shift+Z undo/redo, Esc deselect.
+
 ## Development
 
 ```bash
@@ -25,10 +39,11 @@ Pure geometry and maths live in `src/geometry` and are unit-tested with Vitest. 
 
 ```
 src/
-  geometry/       pure TS: units, transforms, OBB/SAT, viewport, expression parser (+ tests)
+  geometry/       pure TS: units, transforms, OBB/SAT, viewport, rays, camera presets, expression parser (+ tests)
   model/          types, defaults, schema migration, validation
   store/          zustand store, transactional undo history, layout ops, persistence
   views/plan2d/   SVG top-down view
+  views/scene3d/  react-three-fiber 3D view (lazy-loaded)
   ui/             panels and inputs
   app/            shell, theme, keyboard shortcuts
 ```

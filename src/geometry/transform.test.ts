@@ -65,3 +65,34 @@ describe('mirroring', () => {
     close(yawR, expected);
   });
 });
+
+describe('3D orientation', () => {
+  it('pitch tips the front upward', async () => {
+    const { forward3, objectEuler } = await import('./transform');
+    const f = forward3(0, 10);
+    expect(f.y).toBeGreaterThan(0);
+    expect(f.z).toBeCloseTo(Math.cos(Math.PI / 18));
+    expect(objectEuler(0, 10).x).toBeLessThan(0);
+  });
+
+  it('forward3 with zero pitch equals the plan forward', async () => {
+    const { forward3 } = await import('./transform');
+    const f = forward3(30, 0);
+    const p = forwardDir(30);
+    expect(f.x).toBeCloseTo(p.x);
+    expect(f.z).toBeCloseTo(p.z);
+    expect(f.y).toBeCloseTo(0);
+  });
+
+  it('matches three.js YXZ Euler applied to local +Z', async () => {
+    // Rx(a) then Ry(b) applied to (0,0,1): Rx gives (0, -sin a, cos a); Ry rotates in XZ.
+    const { forward3, objectEuler } = await import('./transform');
+    const e = objectEuler(40, 15);
+    const yx = { x: 0, y: -Math.sin(e.x), z: Math.cos(e.x) };
+    const world = { x: yx.x * Math.cos(e.y) + yx.z * Math.sin(e.y), y: yx.y, z: -yx.x * Math.sin(e.y) + yx.z * Math.cos(e.y) };
+    const f = forward3(40, 15);
+    expect(world.x).toBeCloseTo(f.x);
+    expect(world.y).toBeCloseTo(f.y);
+    expect(world.z).toBeCloseTo(f.z);
+  });
+});

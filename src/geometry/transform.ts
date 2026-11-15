@@ -51,3 +51,19 @@ export function mirrorX(x: number, centreX: number): number {
 export function mirrorYaw(yawDeg: number): number {
   return normalizeDeg(-yawDeg);
 }
+
+/**
+ * Three.js Euler angles (order "YXZ": yaw first, then pitch about the object's own X axis)
+ * for an object rotation. Positive pitch tips the front (+Z) upward, which is a negative
+ * rotation about +X.
+ */
+export function objectEuler(yawDeg: number, pitchDeg: number): { x: number; y: number; z: number; order: 'YXZ' } {
+  return { x: -degToRad(pitchDeg), y: degToRad(yawDeg), z: 0, order: 'YXZ' };
+}
+
+/** World-space forward (front-facing) unit vector including pitch. */
+export function forward3(yawDeg: number, pitchDeg: number): { x: number; y: number; z: number } {
+  const t = degToRad(yawDeg);
+  const p = degToRad(pitchDeg);
+  return { x: Math.sin(t) * Math.cos(p), y: Math.sin(p), z: Math.cos(t) * Math.cos(p) };
+}

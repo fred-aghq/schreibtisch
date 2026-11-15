@@ -20,6 +20,9 @@ type Drag =
 
 const DRAG_THRESHOLD_PX = 3;
 
+/** Survives remounts (switching 2D ↔ 3D) so the plan keeps its pan/zoom. */
+let memory: { vp: Viewport; fitRequest: number } | null = null;
+
 export function PlanView() {
   const layout = useLayout();
   const selection = useStore((s) => s.selection);
@@ -28,10 +31,10 @@ export function PlanView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
-  const [vp, setVp] = useState<Viewport>({ scale: 0.5, offsetX: 0, offsetY: 0 });
+  const [vp, setVp] = useState<Viewport>(() => memory?.vp ?? { scale: 0.5, offsetX: 0, offsetY: 0 });
   const [drag, setDrag] = useState<Drag | null>(null);
   const [spaceHeld, setSpaceHeld] = useState(false);
-  const fittedFor = useRef<number | null>(null);
+  const fittedFor = useRef<number | null>(memory?.fitRequest ?? null);
   const layoutRef = useRef(layout);
   useEffect(() => {
     layoutRef.current = layout;
@@ -76,7 +79,8 @@ export function PlanView() {
 
   useEffect(() => {
     useStore.getState().setZoom(vp.scale);
-  }, [vp.scale]);
+    memory = { vp, fitRequest: fittedFor.current ?? -1 };
+  }, [vp]);
 
   // Wheel: zoom toward the cursor (mouse / pinch) or pan (trackpad scroll). Needs a non-passive listener.
   useEffect(() => {

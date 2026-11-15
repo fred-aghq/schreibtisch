@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { CameraPreset } from '../geometry/camera';
 import { createDefaultLayout } from '../model/defaults';
 import type { Layout } from '../model/types';
 import * as H from './history';
@@ -27,6 +28,9 @@ export interface AppState {
   fitRequest: number;
   /** Absolute zoom request (e.g. 1 for 100 %); handled and cleared by the plan view. */
   zoomRequest: number | null;
+  /** Latest 3D camera request; `seq` increases on every request so repeats are honoured. */
+  cameraRequest: { preset: CameraPreset | 'fit'; seq: number } | null;
+  activePreset: CameraPreset | null;
 
   /** Apply a change to the layout (one undo step unless a transaction is open). */
   apply: (recipe: (layout: Layout) => Layout) => void;
@@ -45,6 +49,8 @@ export interface AppState {
   setCursor: (c: Cursor | null) => void;
   requestFit: () => void;
   requestZoom: (scale: number | null) => void;
+  requestCamera: (preset: CameraPreset | 'fit') => void;
+  setActivePreset: (preset: CameraPreset | null) => void;
 }
 
 const initialLayout = loadCurrentLayout() ?? createDefaultLayout();
@@ -59,6 +65,8 @@ export const useStore = create<AppState>()((set) => ({
   cursor: null,
   fitRequest: 0,
   zoomRequest: null,
+  cameraRequest: null,
+  activePreset: null,
 
   apply: (recipe) => set((s) => ({ history: H.commit(s.history, recipe(s.history.present)) })),
   beginTx: () => set((s) => ({ history: H.beginTx(s.history) })),
@@ -81,6 +89,12 @@ export const useStore = create<AppState>()((set) => ({
   setCursor: (cursor) => set({ cursor }),
   requestFit: () => set((s) => ({ fitRequest: s.fitRequest + 1 })),
   requestZoom: (zoomRequest) => set({ zoomRequest }),
+  requestCamera: (preset) =>
+    set((s) => ({
+      cameraRequest: { preset, seq: (s.cameraRequest?.seq ?? 0) + 1 },
+      activePreset: preset === 'fit' ? s.activePreset : preset,
+    })),
+  setActivePreset: (activePreset) => set({ activePreset }),
 }));
 
 /** Current layout selector. */

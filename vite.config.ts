@@ -7,6 +7,8 @@ const base = process.env.BASE_PATH ?? '/';
 export default defineConfig({
   base,
   plugins: [react()],
+  // The 3D chunk (three.js) is lazy-loaded, so its size doesn't affect first paint.
+  build: { chunkSizeWarningLimit: 1200 },
   test: {
     include: ['src/**/*.test.ts'],
     environment: 'node',
