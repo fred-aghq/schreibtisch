@@ -12,7 +12,7 @@ import { floorY, listenerHead } from '../../layout/scene';
 import { objectEuler } from '../../geometry/transform';
 import type { Layout, ObjectDefinition, ObjectInstance } from '../../model/types';
 import type { SceneColours as Colours } from './colours';
-import type { DragTarget } from './dragController';
+import type { DragTarget } from '../../layout/drag';
 
 type StartDrag = (e: ThreeEvent<PointerEvent>, target: DragTarget) => void;
 

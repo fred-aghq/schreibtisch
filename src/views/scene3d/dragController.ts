@@ -2,31 +2,20 @@ import { useThree } from '@react-three/fiber';
 import type { ThreeEvent } from '@react-three/fiber';
 import { useCallback } from 'react';
 import { Raycaster, Vector2, Vector3 } from 'three';
+import { snapTo } from '../../geometry/math';
 import { horizontalPlane, intersectRayPlane, verticalPlaneFacing } from '../../geometry/ray';
 import type { Plane, Ray } from '../../geometry/ray';
-import { listenerHead } from '../../layout/scene';
-import { snapInstance, snapListener } from '../../layout/snap';
-import { snapTo } from '../../geometry/math';
 import type { Vec3 } from '../../geometry/vec';
 import { add3, sub3 } from '../../geometry/vec';
-import { moveInstance, setListener } from '../../model/ops';
+import { canDrag, DragSession, moveTarget, snapTarget, targetPosition } from '../../layout/drag';
+import type { DragTarget } from '../../layout/drag';
 import { useStore } from '../../store/store';
 
-export type DragTarget = { kind: 'object'; id: string } | { kind: 'listener' };
-
-const THRESHOLD_PX = 3;
 /** Edge-snap distance in 3D (mm); there's no single zoom level, so it's fixed. */
 const SNAP_MM = 12;
 
 interface ControlsLike {
   enabled: boolean;
-}
-
-function currentPosition(target: DragTarget): Vec3 | null {
-  const layout = useStore.getState().history.present;
-  if (target.kind === 'listener') return listenerHead(layout);
-  const inst = layout.instances.find((i) => i.id === target.id);
-  return inst ? { ...inst.position } : null;
 }
 
 /**
@@ -46,12 +35,9 @@ export function useDragController(): (e: ThreeEvent<PointerEvent>, target: DragT
       e.stopPropagation();
       const store = useStore.getState();
       store.select(target.kind === 'listener' ? { kind: 'listener' } : { kind: 'instance', id: target.id });
-      if (target.kind === 'object') {
-        const inst = store.history.present.instances.find((i) => i.id === target.id);
-        if (!inst || inst.locked) return;
-      }
-      const startPos = currentPosition(target);
-      if (!startPos) return;
+      const layout = store.history.present;
+      const startPos = targetPosition(layout, target);
+      if (!startPos || !canDrag(layout, target)) return;
 
       const raycaster = new Raycaster();
       const ndc = new Vector2();
@@ -68,41 +54,22 @@ export function useDragController(): (e: ThreeEvent<PointerEvent>, target: DragT
         camera.getWorldDirection(viewDir);
         return verticalPlaneFacing(through, { x: viewDir.x, y: viewDir.y, z: viewDir.z }) ?? horizontalPlane(through);
       };
+      const current = () => targetPosition(useStore.getState().history.present, target);
 
       let vertical = native.shiftKey;
       let anchorPos = startPos;
       let anchorHit: Vec3 = { x: e.point.x, y: e.point.y, z: e.point.z };
       let plane = makePlane(vertical, anchorHit);
-      let moved = false;
       const sx = native.clientX;
       const sy = native.clientY;
       const controls = get().controls as unknown as ControlsLike | null;
       if (controls) controls.enabled = false;
 
-      const apply = (pos: Vec3) => {
-        const s = useStore.getState();
-        if (target.kind === 'object') {
-          s.apply((l) => moveInstance(l, target.id, { position: pos }));
-        } else {
-          s.apply((l) =>
-            setListener(l, {
-              x: pos.x,
-              distanceFromFrontEdge: pos.z,
-              earHeightFromFloor: pos.y + l.desk.heightFromFloor,
-            }),
-          );
-        }
-      };
-
       const onMove = (ev: PointerEvent) => {
-        if (!moved) {
-          if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < THRESHOLD_PX) return;
-          moved = true;
-          useStore.getState().beginTx();
-        }
+        if (!session.update(Math.hypot(ev.clientX - sx, ev.clientY - sy))) return;
         if (ev.shiftKey !== vertical) {
           // Switching between horizontal and vertical mid-drag: re-anchor where we are now.
-          const now = currentPosition(target) ?? anchorPos;
+          const now = current() ?? anchorPos;
           const through = add3(anchorHit, sub3(now, anchorPos));
           vertical = ev.shiftKey;
           plane = makePlane(vertical, through);
@@ -112,42 +79,33 @@ export function useDragController(): (e: ThreeEvent<PointerEvent>, target: DragT
         const hit = intersectRayPlane(rayAt(ev.clientX, ev.clientY), plane);
         if (!hit) return;
         const d = sub3(hit, anchorHit);
-        const layout = useStore.getState().history.present;
-        const { snapEnabled, snapStep } = layout.settings;
-        const step = snapEnabled && !ev.altKey ? snapStep : 0;
+        const s = useStore.getState();
+        const layoutNow = s.history.present;
+        let pos: Vec3;
         if (vertical) {
-          apply({ ...anchorPos, y: snapTo(anchorPos.y + d.y, step) });
+          const { snapEnabled, snapStep } = layoutNow.settings;
+          pos = { ...anchorPos, y: snapTo(anchorPos.y + d.y, snapEnabled && !ev.altKey ? snapStep : 0) };
         } else {
-          const raw = { x: anchorPos.x + d.x, z: anchorPos.z + d.z };
-          const r =
-            target.kind === 'object'
-              ? snapInstance(layout, target.id, raw, SNAP_MM, ev.altKey)
-              : snapListener(layout, raw, SNAP_MM, ev.altKey);
-          apply({ ...anchorPos, x: r.pos.x, z: r.pos.z });
+          const r = snapTarget(layoutNow, target, { x: anchorPos.x + d.x, z: anchorPos.z + d.z }, SNAP_MM, ev.altKey);
+          pos = { ...anchorPos, x: r.pos.x, z: r.pos.z };
         }
+        s.apply((l) => moveTarget(l, target, pos));
       };
+      const onUp = () => session.end();
 
-      const cleanup = () => {
-        window.removeEventListener('pointermove', onMove);
-        window.removeEventListener('pointerup', onUp);
-        window.removeEventListener('pointercancel', onUp);
-        window.removeEventListener('keydown', onKey, true);
-        if (controls) controls.enabled = true;
-      };
-      const onUp = () => {
-        cleanup();
-        if (moved) useStore.getState().endTx();
-      };
-      const onKey = (ev: KeyboardEvent) => {
-        if (ev.key !== 'Escape') return;
-        ev.stopPropagation();
-        cleanup();
-        if (moved) useStore.getState().cancelTx();
-      };
+      const session = new DragSession({
+        tx: store,
+        keys: window,
+        onFinish: () => {
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+          window.removeEventListener('pointercancel', onUp);
+          if (controls) controls.enabled = true;
+        },
+      });
       window.addEventListener('pointermove', onMove);
       window.addEventListener('pointerup', onUp);
       window.addEventListener('pointercancel', onUp);
-      window.addEventListener('keydown', onKey, true);
     },
     [camera, gl, get],
   );
