@@ -2,6 +2,7 @@ import { createDefaultLayout } from '../model/defaults';
 import { renameLayout } from '../model/ops';
 import { useLayout, useStore } from '../store/store';
 import { Icon } from './Icon';
+import { TextField } from './TextField';
 import s from './TopBar.module.css';
 
 export function TopBar() {
@@ -18,15 +19,7 @@ export function TopBar() {
         <span className={s.logo} aria-hidden="true" />
         <span className={s.app}>Schreibtisch</span>
         <span className={s.slash}>/</span>
-        <input
-          className={s.name}
-          value={layout.name}
-          aria-label="Layout name"
-          onChange={(e) => {
-            const name = e.currentTarget.value;
-            apply((l) => renameLayout(l, name));
-          }}
-        />
+        <TextField className={s.name} value={layout.name} aria-label="Layout name" onCommit={(name) => apply((l) => renameLayout(l, name))} />
       </div>
 
       <div className={s.segment} role="group" aria-label="View">

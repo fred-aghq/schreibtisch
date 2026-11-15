@@ -6,6 +6,7 @@ import { deleteObject, duplicateObject } from '../store/commands';
 import { useLayout, useStore } from '../store/store';
 import { Icon } from './Icon';
 import { Library } from './Library';
+import { TextField } from './TextField';
 import p from './panel.module.css';
 import s from './Sidebar.module.css';
 
@@ -71,24 +72,14 @@ function SceneList() {
             <span className={p.dot} style={{ background: def ? CATEGORY_INFO[def.category].tint : 'gray' }} />
             <span className={s.itemText}>
               {renaming === inst.id ? (
-                <input
+                <TextField
                   className={s.renameInput}
-                  defaultValue={inst.label}
+                  value={inst.label}
                   aria-label="Rename"
                   autoFocus
                   onClick={(e) => e.stopPropagation()}
-                  onBlur={(e) => {
-                    const label = e.currentTarget.value.trim();
-                    if (label && label !== inst.label) apply((l) => updateInstance(l, inst.id, { label }));
-                    setRenaming(null);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') e.currentTarget.blur();
-                    if (e.key === 'Escape') {
-                      e.stopPropagation();
-                      setRenaming(null);
-                    }
-                  }}
+                  onCommit={(label) => apply((l) => updateInstance(l, inst.id, { label }))}
+                  onDone={() => setRenaming(null)}
                 />
               ) : (
                 <span title="Double-click to rename">{inst.label}</span>
