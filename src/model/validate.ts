@@ -1,5 +1,4 @@
 import { CATEGORIES, SCHEMA_VERSION } from './types';
-import type { Layout } from './types';
 
 /**
  * Structural validation of a (migrated) layout. Returns a list of friendly error strings;
@@ -73,10 +72,6 @@ export function validateLayout(value: unknown): string[] {
 
   if (!isObj(value.settings)) err('settings', 'missing');
   return errors;
-}
-
-export function isLayout(value: unknown): value is Layout {
-  return validateLayout(value).length === 0;
 }
 
 type Obj = Record<string, unknown>;

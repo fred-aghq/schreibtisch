@@ -1,6 +1,6 @@
 import type { Layout, ObjectDefinition, ObjectInstance } from '../model/types';
 import { obbsOverlap } from '../geometry/obb';
-import { instanceObb } from './scene';
+import { instanceObb, visibleItems } from './scene';
 
 /** Things like desk mats are meant to have objects on top of them. */
 function isSurface(def: ObjectDefinition): boolean {
@@ -20,10 +20,7 @@ function verticalOverlap(a: ObjectInstance, ad: ObjectDefinition, b: ObjectInsta
  * ranges also overlap, so a speaker on a stand above a PC is not flagged. Mats never collide.
  */
 export function findOverlaps(layout: Layout): Set<string> {
-  const items = layout.instances
-    .filter((i) => i.visible)
-    .map((inst) => ({ inst, def: layout.definitions[inst.definitionId] }))
-    .filter((x): x is { inst: ObjectInstance; def: ObjectDefinition } => x.def !== undefined && !isSurface(x.def));
+  const items = visibleItems(layout).filter((x) => !isSurface(x.def));
   const out = new Set<string>();
   items.forEach((a, i) => {
     for (const b of items.slice(i + 1)) {

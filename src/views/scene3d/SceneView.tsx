@@ -5,6 +5,7 @@ import { Raycaster, Vector2 } from 'three';
 import { CAMERA_PRESETS } from '../../layout/cameraPoses';
 import type { CameraPreset } from '../../layout/cameraPoses';
 import { findOverlaps } from '../../layout/overlap';
+import { visibleItems } from '../../layout/scene';
 import { horizontalPlane, intersectRayPlane } from '../../geometry/ray';
 import { setSettings } from '../../model/ops';
 import { useLayout, useStore } from '../../store/store';
@@ -102,11 +103,9 @@ function SceneContent() {
       {layout.settings.showGrid && <DeskGrid layout={layout} colours={colours} />}
       {layout.settings.showFloor && <Floor layout={layout} colours={colours} />}
       <BackWall layout={layout} colours={colours} />
-      {layout.instances.map((inst) => {
-        const def = layout.definitions[inst.definitionId];
-        if (!def || !inst.visible) return null;
-        return <ObjectMesh key={inst.id} inst={inst} def={def} selected={inst.id === selectedId} overlapping={overlaps.has(inst.id)} colours={colours} startDrag={startDrag} />;
-      })}
+      {visibleItems(layout).map(({ inst, def }) => (
+        <ObjectMesh key={inst.id} inst={inst} def={def} selected={inst.id === selectedId} overlapping={overlaps.has(inst.id)} colours={colours} startDrag={startDrag} />
+      ))}
       <Listener3D layout={layout} selected={selection?.kind === 'listener'} colours={colours} startDrag={startDrag} />
     </>
   );

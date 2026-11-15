@@ -1,5 +1,5 @@
 import type { Layout } from '../model/types';
-import { layoutAabb, listenerHead } from './scene';
+import { layoutAabb, listenerHead, visibleItems } from './scene';
 import { degToRad } from '../geometry/math';
 import type { Vec3 } from '../geometry/vec';
 import { add3, len3, normalize3, scale3, sub3 } from '../geometry/vec';
@@ -22,9 +22,7 @@ export function sceneSphere(layout: Layout): Sphere {
   const plan = layoutAabb(layout);
   let minY = -layout.desk.thickness;
   let maxY = Math.max(0, listenerHead(layout).y);
-  for (const inst of layout.instances) {
-    const def = layout.definitions[inst.definitionId];
-    if (!def || !inst.visible) continue;
+  for (const { inst, def } of visibleItems(layout)) {
     // Plan extents are already covered by layoutAabb; only y needs widening here.
     minY = Math.min(minY, inst.position.y);
     maxY = Math.max(maxY, inst.position.y + def.size.h);

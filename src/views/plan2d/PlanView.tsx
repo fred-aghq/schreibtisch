@@ -3,7 +3,7 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import { dimensionGuides } from '../../layout/guides';
 import { obbAabb } from '../../geometry/obb';
 import { findOverlaps } from '../../layout/overlap';
-import { instanceObb, isBelowDesk } from '../../layout/scene';
+import { instanceObb, isBelowDesk, visibleItems } from '../../layout/scene';
 import { snapInstance, snapListener } from '../../layout/snap';
 import type { SnapLine } from '../../layout/snap';
 import { niceLength } from '../../geometry/math';
@@ -213,12 +213,7 @@ interface Item {
 }
 
 function sortedItems(layout: Layout): Item[] {
-  const out: Item[] = [];
-  for (const inst of layout.instances) {
-    const def = layout.definitions[inst.definitionId];
-    if (!def || !inst.visible) continue;
-    out.push({ inst, def, below: isBelowDesk(inst, def) });
-  }
+  const out = visibleItems(layout).map(({ inst, def }) => ({ inst, def, below: isBelowDesk(inst, def) }));
   // Higher objects draw on top.
   return out.sort((a, b) => a.inst.position.y + a.def.size.h - (b.inst.position.y + b.def.size.h));
 }
