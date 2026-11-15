@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { useStore } from '../store/store';
 import { Inspector } from '../ui/Inspector';
+import { ShortcutsDialog } from '../ui/ShortcutsDialog';
 import { Sidebar } from '../ui/Sidebar';
 import { StatusBar } from '../ui/StatusBar';
 import { TopBar } from '../ui/TopBar';
@@ -39,6 +40,7 @@ export function App() {
         <Inspector />
       </aside>
       <StatusBar />
+      <ShortcutsDialog />
     </div>
   );
 }

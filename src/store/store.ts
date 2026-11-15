@@ -3,7 +3,8 @@ import type { CameraPreset } from '../geometry/camera';
 import { createDefaultLayout } from '../model/defaults';
 import type { Layout } from '../model/types';
 import * as H from './history';
-import { debounce, loadCurrentLayout, loadTheme, saveCurrentLayout, saveTheme } from './persistence';
+import type { Preset } from '../model/presets';
+import { debounce, loadCurrentLayout, loadTheme, loadUserPresets, saveCurrentLayout, saveTheme, saveUserPresets } from './persistence';
 import type { Theme } from './persistence';
 
 export type Selection = { kind: 'instance'; id: string } | { kind: 'listener' } | null;
@@ -31,6 +32,9 @@ export interface AppState {
   /** Latest 3D camera request; `seq` increases on every request so repeats are honoured. */
   cameraRequest: { preset: CameraPreset | 'fit'; seq: number } | null;
   activePreset: CameraPreset | null;
+  /** The user's saved definitions (library "My presets"), kept outside any single layout. */
+  userPresets: Preset[];
+  showShortcuts: boolean;
 
   /** Apply a change to the layout (one undo step unless a transaction is open). */
   apply: (recipe: (layout: Layout) => Layout) => void;
@@ -51,6 +55,9 @@ export interface AppState {
   requestZoom: (scale: number | null) => void;
   requestCamera: (preset: CameraPreset | 'fit') => void;
   setActivePreset: (preset: CameraPreset | null) => void;
+  addUserPreset: (preset: Preset) => void;
+  removeUserPreset: (id: string) => void;
+  setShowShortcuts: (show: boolean) => void;
 }
 
 const initialLayout = loadCurrentLayout() ?? createDefaultLayout();
@@ -67,6 +74,8 @@ export const useStore = create<AppState>()((set) => ({
   zoomRequest: null,
   cameraRequest: null,
   activePreset: null,
+  userPresets: loadUserPresets(),
+  showShortcuts: false,
 
   apply: (recipe) => set((s) => ({ history: H.commit(s.history, recipe(s.history.present)) })),
   beginTx: () => set((s) => ({ history: H.beginTx(s.history) })),
@@ -95,6 +104,19 @@ export const useStore = create<AppState>()((set) => ({
       activePreset: preset === 'fit' ? s.activePreset : preset,
     })),
   setActivePreset: (activePreset) => set({ activePreset }),
+  addUserPreset: (preset) =>
+    set((s) => {
+      const userPresets = [...s.userPresets, preset];
+      saveUserPresets(userPresets);
+      return { userPresets };
+    }),
+  removeUserPreset: (id) =>
+    set((s) => {
+      const userPresets = s.userPresets.filter((p) => p.id !== id);
+      saveUserPresets(userPresets);
+      return { userPresets };
+    }),
+  setShowShortcuts: (showShortcuts) => set({ showShortcuts }),
 }));
 
 /** Current layout selector. */

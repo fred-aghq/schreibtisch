@@ -61,20 +61,6 @@ export function makeInstance(def: ObjectDefinition, partial: Partial<ObjectInsta
   };
 }
 
-/** Quick-add templates for milestone 1 (a full library arrives later). All approximate. */
-export const QUICK_ADD: { category: Category; name: string; size: Size; extras?: Partial<ObjectDefinition> }[] = [
-  { category: 'monitor', name: 'Monitor 27"', size: { w: 615, d: 50, h: 370 }, extras: { monitor: { diagonalIn: 27, aspect: '16:9', support: 'mount' } } },
-  { category: 'speaker', name: 'Speaker (medium)', size: { w: 210, d: 290, h: 350 }, extras: { speaker: { acousticCentreHeight: 280, rearPorted: true } } },
-  { category: 'keyboard', name: 'Keyboard (TKL)', size: { w: 360, d: 135, h: 35 } },
-  { category: 'mouse', name: 'Mouse', size: { w: 65, d: 120, h: 40 } },
-  { category: 'mat', name: 'Desk mat', size: { w: 900, d: 400, h: 3 } },
-  { category: 'light', name: 'Monitor light bar', size: { w: 450, d: 90, h: 30 } },
-  { category: 'laptop', name: 'Laptop 14"', size: { w: 312, d: 221, h: 16 } },
-  { category: 'pc', name: 'PC tower', size: { w: 210, d: 450, h: 470 } },
-  { category: 'audio-interface', name: 'Audio interface', size: { w: 190, d: 110, h: 50 } },
-  { category: 'other', name: 'Box', size: { w: 200, d: 200, h: 100 } },
-];
-
 /** A fresh layout: desk + listener + a few generic objects to play with. */
 export function createDefaultLayout(name = 'My desk'): Layout {
   const monitor = makeDefinition('monitor', 'Monitor 27"', { w: 615, d: 50, h: 370 }, {

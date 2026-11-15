@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createDefaultLayout, QUICK_ADD } from '../model/defaults';
-import { addObject, countInstancesOf, deleteInstance, duplicateInstance, updateDefinition, updateInstance } from './ops';
+import { createDefaultLayout } from '../model/defaults';
+import { BUILT_IN_PRESETS } from '../model/presets';
+import { addFromPreset, countInstancesOf, deleteInstance, duplicateInstance, updateDefinition, updateInstance } from './ops';
 
 describe('layout ops', () => {
   it('updates an instance immutably and normalises yaw', () => {
@@ -25,7 +26,8 @@ describe('layout ops', () => {
 
   it('adds and deletes objects, collecting unused definitions', () => {
     const l = createDefaultLayout();
-    const { layout, instanceId } = addObject(l, QUICK_ADD[0]!);
+    const { layout, instanceIds } = addFromPreset(l, BUILT_IN_PRESETS.find((p) => p.id === 'kb-tkl')!);
+    const instanceId = instanceIds[0]!;
     expect(layout.instances).toHaveLength(l.instances.length + 1);
     const inst = layout.instances.find((i) => i.id === instanceId)!;
     expect(layout.definitions[inst.definitionId]).toBeDefined();

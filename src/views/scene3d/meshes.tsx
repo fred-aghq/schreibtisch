@@ -10,7 +10,7 @@ import type { Layout, ObjectDefinition, ObjectInstance } from '../../model/types
 import type { DragTarget } from './dragController';
 
 type StartDrag = (e: ThreeEvent<PointerEvent>, target: DragTarget) => void;
-type Colours = { floor: string; floorGrid: string; floorGridMajor: string; wall: string; legs: string; listener: string; accent: string; screen: string; driver: string };
+type Colours = { floor: string; floorGrid: string; floorGridMajor: string; wall: string; legs: string; listener: string; accent: string; screen: string; driver: string; danger: string };
 
 const setCursor = (e: ThreeEvent<PointerEvent>, cursor: string) => {
   const el = e.nativeEvent.target;
@@ -104,12 +104,14 @@ export function ObjectMesh({
   inst,
   def,
   selected,
+  overlapping,
   colours,
   startDrag,
 }: {
   inst: ObjectInstance;
   def: ObjectDefinition;
   selected: boolean;
+  overlapping: boolean;
   colours: Colours;
   startDrag: StartDrag;
 }) {
@@ -131,9 +133,32 @@ export function ObjectMesh({
       >
         {def.shape === 'cylinder' ? <cylinderGeometry args={[0.5, 0.5, 1, 40]} /> : <boxGeometry args={[w, h, d]} />}
         <meshStandardMaterial color={def.colour} roughness={0.55} emissive={selected ? colours.accent : '#000000'} emissiveIntensity={selected ? 0.18 : 0} />
-        {selected && <Edges color={colours.accent} threshold={20} />}
+        {(selected || overlapping) && <Edges color={selected ? colours.accent : colours.danger} threshold={20} />}
       </mesh>
       <FrontDetail def={def} colours={colours} />
+      <MonitorStand def={def} elevation={inst.position.y} colours={colours} />
+    </group>
+  );
+}
+
+/** A simple stand (base plate + neck) under a monitor whose support is 'stand'. Purely cosmetic. */
+function MonitorStand({ def, elevation, colours }: { def: ObjectDefinition; elevation: number; colours: Colours }) {
+  const stand = def.monitor?.support === 'stand' ? def.monitor.stand : undefined;
+  // The stand reaches down to the desk top (world y = 0, i.e. −elevation locally).
+  if (!stand || elevation <= 0) return null;
+  const drop = elevation;
+  const plate = 12;
+  const neckH = Math.max(drop - plate + def.size.h * 0.3, 1);
+  return (
+    <group raycast={() => null}>
+      <mesh position={[0, -drop + plate / 2, 0]} castShadow receiveShadow raycast={() => null}>
+        <boxGeometry args={[stand.w, plate, stand.d]} />
+        <meshStandardMaterial color={colours.legs} roughness={0.5} metalness={0.3} />
+      </mesh>
+      <mesh position={[0, -drop + plate + neckH / 2, -def.size.d / 2 - 15]} castShadow raycast={() => null}>
+        <boxGeometry args={[60, neckH, 25]} />
+        <meshStandardMaterial color={colours.legs} roughness={0.5} metalness={0.3} />
+      </mesh>
     </group>
   );
 }

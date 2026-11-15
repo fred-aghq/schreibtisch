@@ -5,15 +5,18 @@ import { Raycaster, Vector2, Vector3 } from 'three';
 import { horizontalPlane, intersectRayPlane, verticalPlaneFacing } from '../../geometry/ray';
 import type { Plane, Ray } from '../../geometry/ray';
 import { listenerHead } from '../../geometry/scene';
+import { snapInstance, snapListener } from '../../geometry/snap';
 import { snapTo } from '../../geometry/units';
 import type { Vec3 } from '../../geometry/vec';
 import { add3, sub3 } from '../../geometry/vec3';
-import { setListener, updateInstance } from '../../store/ops';
+import { moveInstance, setListener } from '../../store/ops';
 import { useStore } from '../../store/store';
 
 export type DragTarget = { kind: 'object'; id: string } | { kind: 'listener' };
 
 const THRESHOLD_PX = 3;
+/** Edge-snap distance in 3D (mm); there's no single zoom level, so it's fixed. */
+const SNAP_MM = 12;
 
 interface ControlsLike {
   enabled: boolean;
@@ -79,7 +82,7 @@ export function useDragController(): (e: ThreeEvent<PointerEvent>, target: DragT
       const apply = (pos: Vec3) => {
         const s = useStore.getState();
         if (target.kind === 'object') {
-          s.apply((l) => updateInstance(l, target.id, { position: pos }));
+          s.apply((l) => moveInstance(l, target.id, { position: pos }));
         } else {
           s.apply((l) =>
             setListener(l, {
@@ -109,12 +112,18 @@ export function useDragController(): (e: ThreeEvent<PointerEvent>, target: DragT
         const hit = intersectRayPlane(rayAt(ev.clientX, ev.clientY), plane);
         if (!hit) return;
         const d = sub3(hit, anchorHit);
-        const { snapEnabled, snapStep } = useStore.getState().history.present.settings;
+        const layout = useStore.getState().history.present;
+        const { snapEnabled, snapStep } = layout.settings;
         const step = snapEnabled && !ev.altKey ? snapStep : 0;
         if (vertical) {
           apply({ ...anchorPos, y: snapTo(anchorPos.y + d.y, step) });
         } else {
-          apply({ ...anchorPos, x: snapTo(anchorPos.x + d.x, step), z: snapTo(anchorPos.z + d.z, step) });
+          const raw = { x: anchorPos.x + d.x, z: anchorPos.z + d.z };
+          const r =
+            target.kind === 'object'
+              ? snapInstance(layout, target.id, raw, SNAP_MM, ev.altKey)
+              : snapListener(layout, raw, SNAP_MM, ev.altKey);
+          apply({ ...anchorPos, x: r.pos.x, z: r.pos.z });
         }
       };
 
