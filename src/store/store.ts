@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { CameraPose, CameraPreset } from '../layout/cameraPoses';
 import type { Viewport } from '../geometry/viewport';
+import type { SpeakerFitMode, TriangleFix } from '../layout/triangleFixes';
 import { createDefaultLayout } from '../model/defaults';
 import type { Layout } from '../model/types';
 import * as H from './history';
@@ -45,6 +46,10 @@ export interface AppState {
   /** The user's saved definitions (library "My presets"), kept outside any single layout. */
   userPresets: Preset[];
   showShortcuts: boolean;
+  /** The triangle fix being hovered, previewed as ghosts in both views. */
+  fixPreview: TriangleFix | null;
+  /** How "Move speakers to ideal" sizes the triangle. */
+  speakerFitMode: SpeakerFitMode;
 
   /** Apply a change to the layout (one undo step unless a transaction is open). */
   apply: (recipe: (layout: Layout) => Layout) => void;
@@ -71,6 +76,8 @@ export interface AppState {
   addUserPreset: (preset: Preset) => void;
   removeUserPreset: (id: string) => void;
   setShowShortcuts: (show: boolean) => void;
+  setFixPreview: (fix: TriangleFix | null) => void;
+  setSpeakerFitMode: (mode: SpeakerFitMode) => void;
 }
 
 /**
@@ -92,6 +99,8 @@ export const useStore = create<AppState>()((set, get) => ({
   activePreset: null,
   userPresets: [],
   showShortcuts: false,
+  fixPreview: null,
+  speakerFitMode: 'distance',
 
   apply: (recipe) => set((s) => ({ history: H.commit(s.history, recipe(s.history.present)) })),
   beginTx: () => set((s) => ({ history: H.beginTx(s.history) })),
@@ -140,6 +149,8 @@ export const useStore = create<AppState>()((set, get) => ({
       return { userPresets };
     }),
   setShowShortcuts: (showShortcuts) => set({ showShortcuts }),
+  setFixPreview: (fixPreview) => set({ fixPreview }),
+  setSpeakerFitMode: (speakerFitMode) => set({ speakerFitMode }),
 }));
 
 /** Current layout selector. */

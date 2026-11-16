@@ -81,3 +81,18 @@ export function forward3(yawDeg: number, pitchDeg: number): { x: number; y: numb
   const p = degToRad(pitchDeg);
   return { x: Math.sin(t) * Math.cos(p), y: Math.sin(p), z: Math.cos(t) * Math.cos(p) };
 }
+
+/**
+ * Rotate a point in an object's local frame (x right, y up, z = front) by its yaw and pitch,
+ * exactly as `objectEuler` does in three.js: pitch about the local X axis first, then yaw.
+ */
+export function rotateLocal(local: Vec3, yawDeg: number, pitchDeg: number): Vec3 {
+  const p = degToRad(pitchDeg);
+  const cp = Math.cos(p);
+  const sp = Math.sin(p);
+  // Pitch: positive tips the front (+Z) upward.
+  const y = local.y * cp + local.z * sp;
+  const z = -local.y * sp + local.z * cp;
+  const r = rotatePlan({ x: local.x, z }, yawDeg);
+  return { x: r.x, y, z: r.z };
+}

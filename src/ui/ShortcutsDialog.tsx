@@ -27,7 +27,7 @@ const GROUPS: { title: string; rows: [string, string][] }[] = [
       ['F', 'Zoom to fit'],
       ['1 – 5', 'Top, Front, Side, Isometric, Seated'],
       ['Space+drag', 'Pan (2D)'],
-      ['T', 'Speaker triangle (coming next)'],
+      ['T', 'Speaker triangle'],
       ['?', 'This cheat sheet'],
     ],
   },

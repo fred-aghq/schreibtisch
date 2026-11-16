@@ -1,6 +1,7 @@
 import { createDefaultLayout } from '../model/defaults';
 import { renameLayout } from '../model/ops';
 import { useLayout, useStore } from '../store/store';
+import { toggleTriangle } from '../store/commands';
 import { Icon } from './Icon';
 import { TextField } from './TextField';
 import s from './TopBar.module.css';
@@ -11,6 +12,7 @@ export function TopBar() {
   const canRedo = useStore((st) => st.history.future.length > 0);
   const view = useStore((st) => st.view);
   const theme = useStore((st) => st.theme);
+  const showTriangle = layout.settings.showTriangle;
   const { apply, undo, redo, setView, toggleTheme, replaceLayout, sendViewCommand, setShowShortcuts } = useStore.getState();
 
   return (
@@ -22,12 +24,23 @@ export function TopBar() {
         <TextField className={s.name} value={layout.name} aria-label="Layout name" onCommit={(name) => apply((l) => renameLayout(l, name))} />
       </div>
 
-      <div className={s.segment} role="group" aria-label="View">
-        <button type="button" className={view === '2d' ? s.segOn : s.seg} onClick={() => setView('2d')}>
-          2D
-        </button>
-        <button type="button" className={view === '3d' ? s.segOn : s.seg} onClick={() => setView('3d')}>
-          3D
+      <div className={s.centre}>
+        <div className={s.segment} role="group" aria-label="View">
+          <button type="button" className={view === '2d' ? s.segOn : s.seg} onClick={() => setView('2d')}>
+            2D
+          </button>
+          <button type="button" className={view === '3d' ? s.segOn : s.seg} onClick={() => setView('3d')}>
+            3D
+          </button>
+        </div>
+        <button
+          type="button"
+          className={showTriangle ? s.toggleOn : s.toggle}
+          aria-pressed={showTriangle}
+          onClick={toggleTriangle}
+          title="Speaker triangle overlay (T)"
+        >
+          <Icon name="triangle" size={15} /> Triangle
         </button>
       </div>
 

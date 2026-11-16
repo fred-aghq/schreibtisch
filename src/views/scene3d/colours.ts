@@ -12,6 +12,9 @@ export interface SceneColours {
   screen: string;
   driver: string;
   danger: string;
+  ok: string;
+  warn: string;
+  muted: string;
 }
 
 export const SCENE_COLOURS: Record<Theme, SceneColours> = {
@@ -26,6 +29,9 @@ export const SCENE_COLOURS: Record<Theme, SceneColours> = {
     screen: '#0b0d10',
     driver: '#1a1c20',
     danger: '#f07178',
+    ok: '#7ccf8a',
+    warn: '#f2b84b',
+    muted: '#9099a8',
   },
   light: {
     floor: '#dfe3e8',
@@ -38,5 +44,8 @@ export const SCENE_COLOURS: Record<Theme, SceneColours> = {
     screen: '#14171c',
     driver: '#22252a',
     danger: '#d6454f',
+    ok: '#2f9e48',
+    warn: '#c88a12',
+    muted: '#5f6877',
   },
 };

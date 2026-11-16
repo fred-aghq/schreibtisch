@@ -1,4 +1,6 @@
-import { addFromPreset, deleteInstance, duplicateInstance, moveInstance, setListener } from '../model/ops';
+import { applyTriangleFix } from '../layout/triangleFixes';
+import type { TriangleFix } from '../layout/triangleFixes';
+import { addFromPreset, deleteInstance, duplicateInstance, moveInstance, setListener, setSettings } from '../model/ops';
 import type { Preset } from '../model/presets';
 import type { Layout } from '../model/types';
 import { useStore } from './store';
@@ -79,4 +81,19 @@ export function rotateSelected(deg: number): void {
   const inst = id ? layout.instances.find((i) => i.id === id) : undefined;
   if (!inst) return;
   commit(moveInstance(layout, inst.id, { rotation: { yaw: inst.rotation.yaw + deg } }));
+}
+
+/** Apply a speaker-triangle fix as one undo step, and clear its hover preview. */
+export function applyFix(fix: TriangleFix): void {
+  const { history, speakerFitMode, setFixPreview } = useStore.getState();
+  commit(applyTriangleFix(history.present, fix, speakerFitMode));
+  setFixPreview(null);
+}
+
+/** Show or hide the speaker-triangle overlay (T). Turning it on in 2D re-frames the plan around the card. */
+export function toggleTriangle(): void {
+  const { history, view, sendViewCommand } = useStore.getState();
+  const on = !history.present.settings.showTriangle;
+  commit(setSettings(history.present, { showTriangle: on }));
+  if (on && view === '2d') sendViewCommand({ kind: 'fit' });
 }

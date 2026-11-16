@@ -2,7 +2,7 @@ import { makeInstance } from './defaults';
 import { newId } from './ids';
 import { DEFAULT_MOUNT_ELEVATION, DEFAULT_STAND, definitionFromPreset, monitorPanelSize } from './presets';
 import type { Preset } from './presets';
-import type { AspectRatio, BackWall, Desk, Layout, Listener, ObjectDefinition, ObjectInstance, Settings, Size } from './types';
+import type { AspectRatio, BackWall, SpeakerRole, Desk, Layout, Listener, ObjectDefinition, ObjectInstance, Settings, Size } from './types';
 import { mirrorPose, yawFromDir } from '../geometry/transform';
 import { normalizeDeg } from '../geometry/math';
 
@@ -97,6 +97,22 @@ export function duplicateInstance(layout: Layout, id: string, offset = 20): { la
   const idx = layout.instances.indexOf(inst);
   const instances = [...layout.instances.slice(0, idx + 1), copy, ...layout.instances.slice(idx + 1)];
   return { layout: { ...layout, instances }, instanceId: copy.id };
+}
+
+/**
+ * Give an instance the left or right speaker role (or none). A role belongs to one instance at a
+ * time, so assigning it takes it away from any other instance.
+ */
+export function setSpeakerRole(layout: Layout, id: string, role: SpeakerRole | null): Layout {
+  const inst = findInstance(layout, id);
+  if (!inst || inst.role === role) return layout;
+  return {
+    ...layout,
+    instances: layout.instances.map((i) => {
+      if (i.id === id) return { ...i, role };
+      return role !== null && i.role === role ? { ...i, role: null } : i;
+    }),
+  };
 }
 
 export function countInstancesOf(layout: Layout, definitionId: string): number {

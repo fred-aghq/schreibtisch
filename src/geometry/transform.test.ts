@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { forwardDir, localToWorldPlan, mirrorX, mirrorYaw, rotatePlan, unrotatePlan, yawFromDir } from './transform';
+import { forward3, forwardDir, localToWorldPlan, mirrorX, mirrorYaw, objectEuler, rotateLocal, rotatePlan, unrotatePlan, yawFromDir } from './transform';
 
 const close = (a: number, b: number) => expect(a).toBeCloseTo(b, 9);
 
@@ -94,5 +94,27 @@ describe('3D orientation', () => {
     expect(world.x).toBeCloseTo(f.x);
     expect(world.y).toBeCloseTo(f.y);
     expect(world.z).toBeCloseTo(f.z);
+  });
+});
+
+describe('rotateLocal', () => {
+  it('matches three.js with the objectEuler rotation', async () => {
+    const { Euler, Vector3 } = await import('three');
+    for (const [yaw, pitch] of [[0, 0], [30, 0], [0, 15], [-40, 10], [135, -20]] as const) {
+      const e = objectEuler(yaw, pitch);
+      const v = new Vector3(12, 300, 145).applyEuler(new Euler(e.x, e.y, e.z, e.order));
+      const r = rotateLocal({ x: 12, y: 300, z: 145 }, yaw, pitch);
+      expect(r.x).toBeCloseTo(v.x, 9);
+      expect(r.y).toBeCloseTo(v.y, 9);
+      expect(r.z).toBeCloseTo(v.z, 9);
+    }
+  });
+
+  it('local front (+Z) becomes forward3', () => {
+    const r = rotateLocal({ x: 0, y: 0, z: 1 }, 25, 12);
+    const f = forward3(25, 12);
+    expect(r.x).toBeCloseTo(f.x, 12);
+    expect(r.y).toBeCloseTo(f.y, 12);
+    expect(r.z).toBeCloseTo(f.z, 12);
   });
 });

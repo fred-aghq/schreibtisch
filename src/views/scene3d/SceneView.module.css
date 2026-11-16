@@ -99,3 +99,19 @@
   pointer-events: none;
   user-select: none;
 }
+
+.dimLabel[data-tone='green'] {
+  color: var(--ok);
+}
+
+.dimLabel[data-tone='amber'] {
+  color: var(--warn);
+}
+
+.dimLabel[data-tone='red'] {
+  color: var(--danger);
+}
+
+.dimLabel[data-tone='accent'] {
+  color: var(--text);
+}

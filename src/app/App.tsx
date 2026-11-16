@@ -5,6 +5,7 @@ import { ShortcutsDialog } from '../ui/ShortcutsDialog';
 import { Sidebar } from '../ui/Sidebar';
 import { StatusBar } from '../ui/StatusBar';
 import { TopBar } from '../ui/TopBar';
+import { TriangleCard } from '../ui/triangle/TriangleCard';
 import { PlanView } from '../views/plan2d/PlanView';
 import styles from './App.module.css';
 import { useShortcuts } from './useShortcuts';
@@ -35,6 +36,7 @@ export function App() {
             <SceneView />
           </Suspense>
         )}
+        <TriangleCard />
       </main>
       <aside className={styles.right}>
         <Inspector />

@@ -15,6 +15,10 @@ export interface CanvasSize {
 const INITIAL_VIEWPORT: Viewport = { scale: 0.5, offsetX: 0, offsetY: 0 };
 /** Screen padding around the layout when zooming to fit. */
 const FIT_PADDING_PX = 48;
+/** Room kept free on the right for the speaker-triangle card (see TriangleCard.module.css). */
+export const TRIANGLE_CARD_INSET_PX = 340;
+/** Below this much free width, fitting ignores the card rather than squeezing the plan. */
+const MIN_FIT_WIDTH_PX = 320;
 
 function currentViewport(): Viewport {
   return useStore.getState().planViewport ?? INITIAL_VIEWPORT;
@@ -52,7 +56,11 @@ export function usePlanViewport() {
   // Zoom to fit the first time (no stored viewport yet) and handle fit / zoom commands.
   useEffect(() => {
     if (!size || size.w === 0) return;
-    const fit = () => fitBounds(layoutAabb(useStore.getState().history.present), size.w, size.h, FIT_PADDING_PX);
+    const fit = () => {
+      const layout = useStore.getState().history.present;
+      const inset = layout.settings.showTriangle && size.w - TRIANGLE_CARD_INSET_PX >= MIN_FIT_WIDTH_PX ? TRIANGLE_CARD_INSET_PX : 0;
+      return fitBounds(layoutAabb(layout), size.w - inset, size.h, FIT_PADDING_PX);
+    };
     const handle = () => {
       const st = useStore.getState();
       const cmd = st.claimViewCommand('2d');

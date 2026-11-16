@@ -10,6 +10,7 @@ import { ScaleBar } from './ScaleBar';
 import { ScreenLabels } from './ScreenLabels';
 import { DeskShape, GridLines, ListenerShape } from './shapes';
 import { SnapGuides } from './SnapGuides';
+import { TriangleOverlay } from './TriangleOverlay';
 import { usePlanDrag } from './usePlanDrag';
 import { usePlanViewport } from './usePlanViewport';
 import { ZoomControls } from './ZoomControls';
@@ -73,6 +74,7 @@ export function PlanView() {
           <ListenerShape layout={layout} selected={selection?.kind === 'listener'} onPointerDown={drag.onListenerPointerDown} />
         </g>
         <ScreenLabels layout={layout} vp={vp} items={items} selectedId={selectedId} />
+        {layout.settings.showTriangle && <TriangleOverlay layout={layout} vp={vp} />}
         <SnapGuides vp={vp} snap={drag.snap} />
         {drag.draggingId && <DimensionGuides layout={layout} vp={vp} id={drag.draggingId} />}
       </svg>

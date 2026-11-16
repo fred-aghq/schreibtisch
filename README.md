@@ -34,6 +34,17 @@ Other shortcuts: arrows nudge 1 mm (Shift = 10 mm), Q/E rotate 1° (Shift = 15°
 - **Overlap warnings:** objects whose footprints intersect (as oriented boxes) get a red outline, but only if they also overlap in height. Desk mats are ignored.
 - **Save as preset** keeps any object in Library → My presets (stored in your browser).
 
+### Speaker triangle
+
+Press **T** (or **Triangle** in the top bar) to show the triangle between your two speakers and your head, in both views. In 3D it's drawn at ear height.
+
+- The corners are each speaker's **acoustic point** (the centre of the front face at the tweeter height you enter, after yaw and tilt) and the centre of your head. The speakers are the objects whose **Speaker role** is Left / Right; a speaker pair gets these automatically, and you can give any object a role in the Inspector.
+- The card shows side lengths, the three angles (60° is ideal), **toe-in** (how far each speaker should turn to point at you: ↺ counter-clockwise from above, like Q; ↻ clockwise, like E), how far your ears are above each tweeter, symmetry, and the gap to the back wall if you've set one.
+- Colours follow the tolerances in the card: green within ±2° / ±20 mm, amber within ±5° / ±50 mm, red beyond.
+- **Fixes**, each one undo step (hover to preview): move the listener to the ideal spot, move the speakers into an equilateral triangle (keeping their distance to you, or their spacing), aim them at you, and tilt them to ear height. Locked speakers are left alone.
+- **Aim offset** aims the speakers that far behind the centre of your head (default 0).
+- The biggest unknown is usually your listening distance: sit normally and measure from the desk's front edge to roughly between your ears.
+
 ## Development
 
 ```bash

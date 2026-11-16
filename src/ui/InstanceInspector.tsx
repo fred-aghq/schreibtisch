@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { CATEGORY_INFO } from '../model/categories';
 import { newId } from '../model/ids';
-import { countInstancesOf, makeUnique, moveInstance, pairPartner, setSettings, unlinkPair, updateDefinition, updateInstance } from '../model/ops';
+import { countInstancesOf, makeUnique, moveInstance, pairPartner, setSettings, setSpeakerRole, unlinkPair, updateDefinition, updateInstance } from '../model/ops';
 import type { InstancePatch, PosePatch } from '../model/ops';
 import { presetFromDefinition } from '../model/presets';
 import type { Layout, ObjectDefinition, ObjectInstance } from '../model/types';
@@ -73,6 +73,7 @@ export function InstanceInspector({ layout, inst, def }: { layout: Layout; inst:
         <details className={p.details}>
           <summary>Advanced</summary>
           <NumberField label="Pitch (tilt)" unit="°" value={inst.rotation.pitch} min={-90} max={90} disabled={locked} onCommit={(pitch) => move({ rotation: { pitch } })} title="+ = front tilted upward" />
+          {def.category !== 'speaker' && <RoleField inst={inst} />}
           <label className={p.selectField}>
             Shape
             <select className={p.select} value={def.shape} onChange={(e) => patchDef({ shape: e.currentTarget.value === 'cylinder' ? 'cylinder' : 'box' })}>
@@ -131,6 +132,7 @@ export function InstanceInspector({ layout, inst, def }: { layout: Layout; inst:
             />
             Rear-ported
           </label>
+          <RoleField inst={inst} />
         </div>
       )}
 
@@ -176,5 +178,28 @@ export function InstanceInspector({ layout, inst, def }: { layout: Layout; inst:
         {savedName && <p className={p.note}>Saved “{savedName}” to Library → My presets.</p>}
       </div>
     </div>
+  );
+}
+
+/** Which corner of the speaker triangle this object is (any object can be chosen). */
+function RoleField({ inst }: { inst: ObjectInstance }) {
+  const apply = useStore((s) => s.apply);
+  return (
+    <label className={p.selectField} title="The speaker triangle uses the objects marked Left and Right. Choosing one here takes it from any other object.">
+      Speaker role
+      <select
+        className={p.select}
+        value={inst.role ?? ''}
+        onChange={(e) => {
+          const v = e.currentTarget.value;
+          const role = v === 'speakerL' || v === 'speakerR' ? v : null;
+          apply((l) => setSpeakerRole(l, inst.id, role));
+        }}
+      >
+        <option value="">None</option>
+        <option value="speakerL">Left</option>
+        <option value="speakerR">Right</option>
+      </select>
+    </label>
   );
 }
