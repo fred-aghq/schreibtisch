@@ -1,4 +1,4 @@
-/** Units helpers. 1 world unit = 1 mm everywhere. */
+/** Scalar maths: angles, clamping, snapping. 1 world unit = 1 mm everywhere. */
 
 export const DEG = Math.PI / 180;
 
@@ -8,18 +8,6 @@ export function degToRad(deg: number): number {
 
 export function radToDeg(rad: number): number {
   return rad / DEG;
-}
-
-/** Round to whole millimetres for display (avoids "-0"). */
-export function roundMm(mm: number): number {
-  const r = Math.round(mm);
-  return Object.is(r, -0) ? 0 : r;
-}
-
-/** Format a millimetre value for display, e.g. "1 600 mm" style without locale surprises. */
-export function formatMm(mm: number, withUnit = true): string {
-  const s = String(roundMm(mm));
-  return withUnit ? `${s} mm` : s;
 }
 
 /** Normalise an angle in degrees to the range (-180, 180]. */

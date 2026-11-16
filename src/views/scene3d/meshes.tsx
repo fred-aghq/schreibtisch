@@ -4,13 +4,20 @@ import type { ThreeEvent } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import { BufferGeometry, DoubleSide, Float32BufferAttribute } from 'three';
 import type { Group } from 'three';
-import { CHAIR, floorY, listenerHead } from '../../geometry/scene';
+import { deskGridLines } from '../../layout/grid';
+import { LISTENER_BODY, listenerFigure } from '../../layout/listenerBody';
+import type { BodyBox } from '../../layout/listenerBody';
+import type { Vec3 } from '../../geometry/vec';
+import { floorY, listenerHead } from '../../layout/scene';
 import { objectEuler } from '../../geometry/transform';
 import type { Layout, ObjectDefinition, ObjectInstance } from '../../model/types';
-import type { DragTarget } from './dragController';
+import type { SceneColours as Colours } from './colours';
+import type { DragTarget } from '../../layout/drag';
 
 type StartDrag = (e: ThreeEvent<PointerEvent>, target: DragTarget) => void;
-type Colours = { floor: string; floorGrid: string; floorGridMajor: string; wall: string; legs: string; listener: string; accent: string; screen: string; driver: string; danger: string };
+
+const xyz = (v: Vec3): [number, number, number] => [v.x, v.y, v.z];
+const whd = (b: BodyBox): [number, number, number] => [b.size.w, b.size.h, b.size.d];
 
 const setCursor = (e: ThreeEvent<PointerEvent>, cursor: string) => {
   const el = e.nativeEvent.target;
@@ -42,17 +49,15 @@ export function Desk({ layout, colours }: { layout: Layout; colours: Colours }) 
   );
 }
 
+/** The 3D grid has no zoom level to adapt to, so it just never gets finer than this. */
+const MIN_GRID_MM = 5;
+
 export function DeskGrid({ layout, colours }: { layout: Layout; colours: Colours }) {
   const { width: W, depth: D } = layout.desk;
-  const spacing = Math.max(layout.settings.gridSpacing, 5);
+  const spacing = layout.settings.gridSpacing;
   const geometry = useMemo(() => {
-    const pts: number[] = [];
     const y = 0.5;
-    for (let x = Math.ceil(-W / 2 / spacing) * spacing; x <= W / 2; x += spacing) {
-      if (Math.abs(x) < 1e-6 || Math.abs(Math.abs(x) - W / 2) < 1e-6) continue;
-      pts.push(x, y, -D, x, y, 0);
-    }
-    for (let z = -spacing; z > -D; z -= spacing) pts.push(-W / 2, y, z, W / 2, y, z);
+    const pts = deskGridLines({ width: W, depth: D }, spacing, MIN_GRID_MM).flatMap((l) => [l.a.x, y, l.a.z, l.b.x, y, l.b.z]);
     const g = new BufferGeometry();
     g.setAttribute('position', new Float32BufferAttribute(pts, 3));
     return g;
@@ -201,13 +206,8 @@ function FrontDetail({ def, colours }: { def: ObjectDefinition; colours: Colours
 }
 
 export function Listener3D({ layout, selected, colours, startDrag }: { layout: Layout; selected: boolean; colours: Colours; startDrag: StartDrag }) {
-  const head = listenerHead(layout);
-  const floor = floorY(layout);
-  const seatY = floor + 470;
-  const seatDepth = 460;
-  const seatZ = head.z + 130;
-  const torsoTop = head.y - CHAIR.headRadius - 40;
-  const torsoH = Math.max(torsoTop - (seatY + 40), 50);
+  const { head, torso, seat, backrest, pedestal } = listenerFigure(listenerHead(layout), floorY(layout));
+  const headR = LISTENER_BODY.headRadius;
   const headRef = useRef<Group>(null);
   const camera = useThree((s) => s.camera);
 
@@ -218,7 +218,7 @@ export function Listener3D({ layout, selected, colours, startDrag }: { layout: L
     const dx = camera.position.x - head.x;
     const dy = camera.position.y - head.y;
     const dz = camera.position.z - head.z;
-    g.visible = Math.hypot(dx, dy, dz) > CHAIR.headRadius * 2.5;
+    g.visible = Math.hypot(dx, dy, dz) > headR * 2.5;
   });
 
   const mat = (opacity: number) => (
@@ -243,30 +243,30 @@ export function Listener3D({ layout, selected, colours, startDrag }: { layout: L
     <group>
       <group ref={headRef} position={[head.x, head.y, head.z]}>
         <mesh castShadow onPointerDown={onDown} onPointerOver={over} onPointerOut={out}>
-          <sphereGeometry args={[CHAIR.headRadius, 32, 20]} />
+          <sphereGeometry args={[headR, 32, 20]} />
           {mat(1)}
         </mesh>
-        <mesh position={[0, -10, -CHAIR.headRadius]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
+        <mesh position={[0, -10, -headR]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
           <coneGeometry args={[18, 40, 16]} />
           {mat(1)}
         </mesh>
       </group>
       {/* Torso */}
-      <mesh position={[head.x, seatY + 40 + torsoH / 2, head.z + 40]} castShadow onPointerDown={onDown} onPointerOver={over} onPointerOut={out}>
-        <boxGeometry args={[360, torsoH, 200]} />
+      <mesh position={xyz(torso.center)} castShadow onPointerDown={onDown} onPointerOver={over} onPointerOut={out}>
+        <boxGeometry args={whd(torso)} />
         {mat(0.35)}
       </mesh>
       {/* Chair seat and back */}
-      <mesh position={[head.x, seatY, seatZ]} castShadow raycast={() => null}>
-        <boxGeometry args={[CHAIR.width - 40, 60, seatDepth]} />
+      <mesh position={xyz(seat.center)} castShadow raycast={() => null}>
+        <boxGeometry args={whd(seat)} />
         <meshStandardMaterial color={colours.legs} roughness={0.9} transparent opacity={0.45} depthWrite={false} />
       </mesh>
-      <mesh position={[head.x, seatY + 330, seatZ + seatDepth / 2 - 20]} castShadow raycast={() => null}>
-        <boxGeometry args={[CHAIR.width - 80, 560, 50]} />
+      <mesh position={xyz(backrest.center)} castShadow raycast={() => null}>
+        <boxGeometry args={whd(backrest)} />
         <meshStandardMaterial color={colours.legs} roughness={0.9} transparent opacity={0.3} depthWrite={false} />
       </mesh>
-      <mesh position={[head.x, (floor + seatY) / 2, seatZ]} raycast={() => null}>
-        <cylinderGeometry args={[25, 25, seatY - floor, 12]} />
+      <mesh position={xyz(pedestal.center)} raycast={() => null}>
+        <cylinderGeometry args={[LISTENER_BODY.pedestalRadius, LISTENER_BODY.pedestalRadius, pedestal.height, 12]} />
         <meshStandardMaterial color={colours.legs} roughness={0.5} metalness={0.4} />
       </mesh>
     </group>

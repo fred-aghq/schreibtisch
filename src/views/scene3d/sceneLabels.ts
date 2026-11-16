@@ -1,4 +1,4 @@
-import { formatMm } from '../../geometry/units';
+import { formatMm } from '../../lib/format';
 import type { Layout } from '../../model/types';
 import type { SceneLabel } from './labels';
 

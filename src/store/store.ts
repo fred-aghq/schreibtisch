@@ -1,15 +1,24 @@
 import { create } from 'zustand';
-import type { CameraPreset } from '../geometry/camera';
+import type { CameraPose, CameraPreset } from '../layout/cameraPoses';
+import type { Viewport } from '../geometry/viewport';
 import { createDefaultLayout } from '../model/defaults';
 import type { Layout } from '../model/types';
 import * as H from './history';
 import type { Preset } from '../model/presets';
-import { debounce, loadCurrentLayout, loadTheme, loadUserPresets, saveCurrentLayout, saveTheme, saveUserPresets } from './persistence';
-import type { Theme } from './persistence';
+import { saveTheme, saveUserPresets } from './persistence';
 
+export type Theme = 'dark' | 'light';
 export type Selection = { kind: 'instance'; id: string } | { kind: 'listener' } | null;
 export type ViewMode = '2d' | '3d';
 export type SidebarTab = 'library' | 'scene';
+
+/** One-shot requests to whichever view handles them (plan: fit / zoom, 3D: camera). */
+export type ViewCommand = { kind: 'fit' } | { kind: 'zoom'; scale: number } | { kind: 'camera'; preset: CameraPreset | 'fit' };
+
+/** The view that handles a command. */
+export function commandView(cmd: ViewCommand): ViewMode {
+  return cmd.kind === 'camera' ? '3d' : '2d';
+}
 
 export interface Cursor {
   x: number;
@@ -25,12 +34,13 @@ export interface AppState {
   /** Plan-view zoom (px per mm) and cursor position, mirrored here for the status bar. */
   zoom: number;
   cursor: Cursor | null;
-  /** Monotonic counter; plan view zooms to fit whenever it changes. */
-  fitRequest: number;
-  /** Absolute zoom request (e.g. 1 for 100 %); handled and cleared by the plan view. */
-  zoomRequest: number | null;
-  /** Latest 3D camera request; `seq` increases on every request so repeats are honoured. */
-  cameraRequest: { preset: CameraPreset | 'fit'; seq: number } | null;
+  /** Latest view command; `seq` increases on every request so repeats are honoured. */
+  viewCommand: { seq: number; cmd: ViewCommand } | null;
+  /** The last command `seq` each view has handled. */
+  handledSeq: Record<ViewMode, number>;
+  /** View state kept here (not persisted) so it survives switching 2D ↔ 3D. */
+  planViewport: Viewport | null;
+  cameraPose: CameraPose | null;
   activePreset: CameraPreset | null;
   /** The user's saved definitions (library "My presets"), kept outside any single layout. */
   userPresets: Preset[];
@@ -51,30 +61,36 @@ export interface AppState {
   setSidebarTab: (t: SidebarTab) => void;
   setZoom: (z: number) => void;
   setCursor: (c: Cursor | null) => void;
-  requestFit: () => void;
-  requestZoom: (scale: number | null) => void;
-  requestCamera: (preset: CameraPreset | 'fit') => void;
+  sendViewCommand: (cmd: ViewCommand) => void;
+  /** Take the pending command for `view` if it hasn't handled it yet (and mark it handled). */
+  claimViewCommand: (view: ViewMode) => ViewCommand | null;
+  /** Also mirrors the scale into `zoom` for the status bar. */
+  setPlanViewport: (vp: Viewport | null) => void;
+  setCameraPose: (pose: CameraPose) => void;
   setActivePreset: (preset: CameraPreset | null) => void;
   addUserPreset: (preset: Preset) => void;
   removeUserPreset: (id: string) => void;
   setShowShortcuts: (show: boolean) => void;
 }
 
-const initialLayout = loadCurrentLayout() ?? createDefaultLayout();
-
-export const useStore = create<AppState>()((set) => ({
-  history: H.createHistory(initialLayout),
+/**
+ * The app store: the layout document (with undo history), UI state and view state. Creating it
+ * has no side effects; `initStore()` (store/init.ts) loads saved data and starts autosave.
+ */
+export const useStore = create<AppState>()((set, get) => ({
+  history: H.createHistory(createDefaultLayout()),
   selection: null,
   view: '2d',
-  theme: loadTheme(),
+  theme: 'dark',
   sidebarTab: 'scene',
   zoom: 1,
   cursor: null,
-  fitRequest: 0,
-  zoomRequest: null,
-  cameraRequest: null,
+  viewCommand: null,
+  handledSeq: { '2d': 0, '3d': 0 },
+  planViewport: null,
+  cameraPose: null,
   activePreset: null,
-  userPresets: loadUserPresets(),
+  userPresets: [],
   showShortcuts: false,
 
   apply: (recipe) => set((s) => ({ history: H.commit(s.history, recipe(s.history.present)) })),
@@ -83,7 +99,8 @@ export const useStore = create<AppState>()((set) => ({
   cancelTx: () => set((s) => ({ history: H.cancelTx(s.history) })),
   undo: () => set((s) => ({ history: H.undo(s.history) })),
   redo: () => set((s) => ({ history: H.redo(s.history) })),
-  replaceLayout: (layout) => set({ history: H.createHistory(layout), selection: null }),
+  // A new layout is framed afresh by the plan view the next time it renders.
+  replaceLayout: (layout) => set({ history: H.createHistory(layout), selection: null, planViewport: null }),
 
   select: (selection) => set({ selection }),
   setView: (view) => set({ view }),
@@ -96,13 +113,19 @@ export const useStore = create<AppState>()((set) => ({
   setSidebarTab: (sidebarTab) => set({ sidebarTab }),
   setZoom: (zoom) => set({ zoom }),
   setCursor: (cursor) => set({ cursor }),
-  requestFit: () => set((s) => ({ fitRequest: s.fitRequest + 1 })),
-  requestZoom: (zoomRequest) => set({ zoomRequest }),
-  requestCamera: (preset) =>
+  sendViewCommand: (cmd) =>
     set((s) => ({
-      cameraRequest: { preset, seq: (s.cameraRequest?.seq ?? 0) + 1 },
-      activePreset: preset === 'fit' ? s.activePreset : preset,
+      viewCommand: { seq: (s.viewCommand?.seq ?? 0) + 1, cmd },
+      activePreset: cmd.kind === 'camera' && cmd.preset !== 'fit' ? cmd.preset : s.activePreset,
     })),
+  claimViewCommand: (view) => {
+    const { viewCommand, handledSeq } = get();
+    if (!viewCommand || viewCommand.seq <= handledSeq[view] || commandView(viewCommand.cmd) !== view) return null;
+    set({ handledSeq: { ...handledSeq, [view]: viewCommand.seq } });
+    return viewCommand.cmd;
+  },
+  setPlanViewport: (planViewport) => set(planViewport ? { planViewport, zoom: planViewport.scale } : { planViewport }),
+  setCameraPose: (cameraPose) => set({ cameraPose }),
   setActivePreset: (activePreset) => set({ activePreset }),
   addUserPreset: (preset) =>
     set((s) => {
@@ -121,16 +144,3 @@ export const useStore = create<AppState>()((set) => ({
 
 /** Current layout selector. */
 export const useLayout = (): Layout => useStore((s) => s.history.present);
-
-// Debounced autosave whenever the layout changes.
-const autosave = debounce(saveCurrentLayout, 400);
-useStore.subscribe((state, prev) => {
-  if (state.history.present !== prev.history.present) autosave(state.history.present);
-});
-// Never lose the last edit to a quick reload or tab close.
-if (typeof window !== 'undefined') {
-  window.addEventListener('pagehide', autosave.flush);
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') autosave.flush();
-  });
-}

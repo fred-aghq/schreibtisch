@@ -1,5 +1,5 @@
-import { degToRad, normalizeDeg, radToDeg } from './units';
-import type { Vec2 } from './vec';
+import { degToRad, normalizeDeg, radToDeg } from './math';
+import type { Vec2, Vec3 } from './vec';
 
 /**
  * Yaw convention (matches three.js `rotation.y`):
@@ -50,6 +50,20 @@ export function mirrorX(x: number, centreX: number): number {
 /** Mirror a yaw across a plane parallel to Z (x → mirrored ⇒ yaw → −yaw). */
 export function mirrorYaw(yawDeg: number): number {
   return normalizeDeg(-yawDeg);
+}
+
+/** A position plus yaw / pitch in degrees (the shape of an object instance's pose). */
+export interface Pose {
+  position: Vec3;
+  rotation: { yaw: number; pitch: number };
+}
+
+/** The pose mirrored across the vertical plane x = centreX (x mirrored, yaw negated). */
+export function mirrorPose(pose: Pose, centreX: number): Pose {
+  return {
+    position: { x: mirrorX(pose.position.x, centreX), y: pose.position.y, z: pose.position.z },
+    rotation: { yaw: mirrorYaw(pose.rotation.yaw), pitch: pose.rotation.pitch },
+  };
 }
 
 /**

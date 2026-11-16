@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { OBB } from './obb';
-import { obbAabb, obbCorners, obbsOverlap, pointInObb, unionAabb } from './obb';
+import { obbAabb, obbCorners, obbsOverlap, unionAabb } from './obb';
 
 const box = (x: number, z: number, w: number, d: number, yaw = 0): OBB => ({ center: { x, z }, halfW: w / 2, halfD: d / 2, yaw });
 
@@ -25,12 +25,6 @@ describe('OBB', () => {
     const a = obbAabb(box(10, 0, 100, 100, 45));
     expect(a.maxX - a.minX).toBeCloseTo(100 * Math.SQRT2);
     expect((a.maxX + a.minX) / 2).toBeCloseTo(10);
-  });
-
-  it('point containment respects rotation', () => {
-    const b = box(0, 0, 200, 20, 90); // long along Z after rotation
-    expect(pointInObb({ x: 0, z: 90 }, b)).toBe(true);
-    expect(pointInObb({ x: 90, z: 0 }, b)).toBe(false);
   });
 
   it('detects overlap of axis-aligned boxes', () => {

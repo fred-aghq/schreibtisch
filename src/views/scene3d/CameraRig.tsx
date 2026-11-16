@@ -1,29 +1,30 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import type { PerspectiveCamera } from 'three';
-import { cameraPose, easeInOut, fitPose } from '../../geometry/camera';
-import type { CameraPose, CameraPreset } from '../../geometry/camera';
-import { lerp3 } from '../../geometry/vec3';
+import { cameraPose, easeInOut, fitPose } from '../../layout/cameraPoses';
+import type { CameraPose, CameraPreset } from '../../layout/cameraPoses';
+import { lerp3 } from '../../geometry/vec';
 import { useStore } from '../../store/store';
 
 interface OrbitLike {
   target: { x: number; y: number; z: number; set: (x: number, y: number, z: number) => void };
   update: () => void;
-  addEventListener: (type: 'start' | 'change', fn: () => void) => void;
-  removeEventListener: (type: 'start' | 'change', fn: () => void) => void;
+  addEventListener: (type: 'start' | 'end', fn: () => void) => void;
+  removeEventListener: (type: 'start' | 'end', fn: () => void) => void;
 }
-
-/** Survives remounts (switching 2D ↔ 3D), so the 3D camera stays where you left it. */
-let memory: CameraPose | null = null;
-let handledSeq = 0;
 
 const DURATION_MS = 450;
 
-/** Applies camera presets / fit requests with a short eased transition. */
+/**
+ * Applies camera presets / fit requests with a short eased transition. The pose is saved to the
+ * store (not every frame: when a user gesture or a transition ends, and on unmount), so the 3D
+ * camera stays where you left it when switching 2D ↔ 3D.
+ */
 export function CameraRig() {
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
   const controls = useThree((s) => s.controls) as unknown as OrbitLike | null;
   const anim = useRef<{ from: CameraPose; to: CameraPose; start: number } | null>(null);
+  const saveRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (!controls) return;
@@ -44,38 +45,34 @@ export function CameraRig() {
       else setPose(to);
     };
 
-    const pending = useStore.getState().cameraRequest;
-    if (pending && pending.seq > handledSeq) {
-      handledSeq = pending.seq;
-      go(pending.preset, false);
-    } else if (memory) {
-      setPose(memory);
-    } else {
-      go('iso', false);
-    }
+    const save = () => useStore.getState().setCameraPose(current());
+    saveRef.current = save;
+
+    const handle = (animate: boolean) => {
+      const cmd = useStore.getState().claimViewCommand('3d');
+      if (cmd?.kind === 'camera') go(cmd.preset, animate);
+    };
+    const remembered = useStore.getState().cameraPose;
+    if (remembered) setPose(remembered);
+    else go('iso', false);
+    handle(false);
 
     const unsubscribe = useStore.subscribe((s, prev) => {
-      const req = s.cameraRequest;
-      if (req && req !== prev.cameraRequest && req.seq > handledSeq) {
-        handledSeq = req.seq;
-        go(req.preset, true);
-      }
+      if (s.viewCommand !== prev.viewCommand) handle(true);
     });
     const onStart = () => {
       // The user grabbed the camera: stop any transition and drop the preset highlight.
       anim.current = null;
       if (useStore.getState().activePreset) useStore.getState().setActivePreset(null);
     };
-    const onChange = () => {
-      memory = current();
-    };
     controls.addEventListener('start', onStart);
-    controls.addEventListener('change', onChange);
+    controls.addEventListener('end', save);
     return () => {
       unsubscribe();
       controls.removeEventListener('start', onStart);
-      controls.removeEventListener('change', onChange);
-      memory = current();
+      controls.removeEventListener('end', save);
+      saveRef.current = null;
+      save();
     };
   }, [camera, controls]);
 
@@ -89,7 +86,10 @@ export function CameraRig() {
     camera.position.set(pos.x, pos.y, pos.z);
     controls.target.set(tgt.x, tgt.y, tgt.z);
     controls.update();
-    if (t >= 1) anim.current = null;
+    if (t >= 1) {
+      anim.current = null;
+      saveRef.current?.();
+    }
   });
 
   return null;

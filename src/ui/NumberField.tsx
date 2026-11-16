@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import { evaluateExpression } from '../geometry/expr';
+import { evaluateExpression } from '../lib/expr';
 import styles from './NumberField.module.css';
 
 export interface NumberFieldProps {

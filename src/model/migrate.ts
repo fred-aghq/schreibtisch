@@ -1,7 +1,7 @@
 import { DEFAULT_SETTINGS } from './defaults';
 import { SCHEMA_VERSION } from './types';
 import type { Layout } from './types';
-import { validateLayout } from './validate';
+import { LayoutSchema, parseWith } from './schema';
 
 export type MigrationResult = { ok: true; layout: Layout } | { ok: false; errors: string[] };
 
@@ -35,16 +35,40 @@ export function migrateLayout(input: unknown): MigrationResult {
     version++;
   }
   raw = fillDefaults(raw);
-  const errors = validateLayout(raw);
-  if (errors.length > 0) return { ok: false, errors };
-  return { ok: true, layout: raw as unknown as Layout };
+  const parsed = parseWith(LayoutSchema, raw);
+  // Reference checks run on the raw data too, so one import reports every problem at once.
+  const errors = [...(parsed.ok ? [] : parsed.errors), ...referenceErrors(raw)];
+  if (errors.length > 0 || !parsed.ok) return { ok: false, errors };
+  return { ok: true, layout: parsed.value };
+}
+
+function isObj(v: unknown): v is Raw {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+
+/** Every instance must point at an existing definition, and definitions are keyed by their id. */
+function referenceErrors(raw: Raw): string[] {
+  const errors: string[] = [];
+  const defs = isObj(raw.definitions) ? raw.definitions : null;
+  if (defs) {
+    for (const [key, def] of Object.entries(defs)) {
+      if (isObj(def) && typeof def.id === 'string' && def.id !== key) errors.push(`definitions.${key}: id does not match its key`);
+    }
+  }
+  if (defs && Array.isArray(raw.instances)) {
+    raw.instances.forEach((inst: unknown, i: number) => {
+      if (isObj(inst) && typeof inst.definitionId === 'string' && !(inst.definitionId in defs)) {
+        errors.push(`instances[${i}]: refers to unknown definition "${inst.definitionId}"`);
+      }
+    });
+  }
+  return errors;
 }
 
 /** Fill optional / later-added fields so older files keep working. */
 function fillDefaults(raw: Raw): Raw {
-  const settingsIn = typeof raw.settings === 'object' && raw.settings !== null ? (raw.settings as Raw) : {};
-  const tolerancesIn =
-    typeof settingsIn.tolerances === 'object' && settingsIn.tolerances !== null ? (settingsIn.tolerances as Raw) : {};
+  const settingsIn = isObj(raw.settings) ? raw.settings : {};
+  const tolerancesIn = isObj(settingsIn.tolerances) ? settingsIn.tolerances : {};
   return {
     ...raw,
     backWall: raw.backWall ?? null,
@@ -55,9 +79,7 @@ function fillDefaults(raw: Raw): Raw {
     },
     instances: Array.isArray(raw.instances)
       ? raw.instances.map((i: unknown) =>
-          typeof i === 'object' && i !== null
-            ? { locked: false, visible: true, role: null, rotation: { yaw: 0, pitch: 0 }, ...(i as Raw) }
-            : i,
+          isObj(i) ? { locked: false, visible: true, role: null, rotation: { yaw: 0, pitch: 0 }, ...i } : i,
         )
       : raw.instances,
   };

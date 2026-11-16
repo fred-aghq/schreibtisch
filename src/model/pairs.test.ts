@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createDefaultLayout } from '../model/defaults';
-import { BUILT_IN_PRESETS, monitorPreset } from '../model/presets';
+import { createDefaultLayout } from './defaults';
+import { BUILT_IN_PRESETS, monitorPreset } from './presets';
 import { forwardDir } from '../geometry/transform';
 import { addFromPreset, makeUnique, moveInstance, pairPartner, regenerateMonitor, unlinkPair } from './ops';
 

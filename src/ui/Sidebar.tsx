@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
-import { findOverlaps } from '../geometry/overlap';
+import { findOverlaps } from '../layout/overlap';
 import { CATEGORY_INFO } from '../model/categories';
-import { deleteInstance, duplicateInstance, updateInstance } from '../store/ops';
+import { updateInstance } from '../model/ops';
+import { deleteObject, duplicateObject } from '../store/commands';
 import { useLayout, useStore } from '../store/store';
 import { Icon } from './Icon';
 import { Library } from './Library';
+import { TextField } from './TextField';
 import p from './panel.module.css';
 import s from './Sidebar.module.css';
 
@@ -70,24 +72,14 @@ function SceneList() {
             <span className={p.dot} style={{ background: def ? CATEGORY_INFO[def.category].tint : 'gray' }} />
             <span className={s.itemText}>
               {renaming === inst.id ? (
-                <input
+                <TextField
                   className={s.renameInput}
-                  defaultValue={inst.label}
+                  value={inst.label}
                   aria-label="Rename"
                   autoFocus
                   onClick={(e) => e.stopPropagation()}
-                  onBlur={(e) => {
-                    const label = e.currentTarget.value.trim();
-                    if (label && label !== inst.label) apply((l) => updateInstance(l, inst.id, { label }));
-                    setRenaming(null);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') e.currentTarget.blur();
-                    if (e.key === 'Escape') {
-                      e.stopPropagation();
-                      setRenaming(null);
-                    }
-                  }}
+                  onCommit={(label) => apply((l) => updateInstance(l, inst.id, { label }))}
+                  onDone={() => setRenaming(null)}
                 />
               ) : (
                 <span title="Double-click to rename">{inst.label}</span>
@@ -107,13 +99,7 @@ function SceneList() {
                 aria-label={`Duplicate ${inst.label}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  let id = inst.id;
-                  apply((l) => {
-                    const r = duplicateInstance(l, inst.id);
-                    id = r.instanceId;
-                    return r.layout;
-                  });
-                  select({ kind: 'instance', id });
+                  duplicateObject(inst.id);
                 }}
               >
                 <Icon name="copy" size={14} />
@@ -126,8 +112,7 @@ function SceneList() {
                 disabled={inst.locked}
                 onClick={(e) => {
                   e.stopPropagation();
-                  apply((l) => deleteInstance(l, inst.id));
-                  if (sel) select(null);
+                  deleteObject(inst.id);
                 }}
               >
                 <Icon name="trash" size={14} />

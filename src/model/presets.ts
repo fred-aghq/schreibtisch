@@ -1,7 +1,36 @@
-import { monitorName, monitorSize } from '../geometry/monitor';
-import type { MonitorParams } from '../geometry/monitor';
+import { monitorSize } from '../geometry/monitor';
+import type { Aspect } from '../geometry/monitor';
 import { CATEGORY_INFO } from './categories';
-import type { Category, MonitorExtras, ObjectDefinition, Shape, Size, SpeakerExtras } from './types';
+import type { AspectRatio, Category, MonitorExtras, ObjectDefinition, Shape, Size, SpeakerExtras } from './types';
+
+/** The aspect ratios the monitor generator offers, as [width, height]. */
+export const ASPECTS: Record<AspectRatio, Aspect> = {
+  '16:9': [16, 9],
+  '16:10': [16, 10],
+  '21:9': [21, 9],
+  '32:9': [32, 9],
+};
+
+export const ASPECT_RATIOS = Object.keys(ASPECTS) as AspectRatio[];
+
+/** Monitor generator parameters, with the aspect as a named ratio. */
+export interface MonitorParams {
+  diagonalIn: number;
+  aspect: AspectRatio;
+  bezelMm: number;
+  /** Panel (housing) thickness, mm. */
+  panelDepth: number;
+}
+
+/** Outer panel size (mm, including bezels) for generator parameters. */
+export function monitorPanelSize(p: MonitorParams): Size {
+  return monitorSize({ ...p, aspect: ASPECTS[p.aspect] });
+}
+
+export function monitorName(p: Pick<MonitorParams, 'diagonalIn' | 'aspect'>): string {
+  const d = Number.isInteger(p.diagonalIn) ? String(p.diagonalIn) : p.diagonalIn.toFixed(1);
+  return `Monitor ${d}" ${p.aspect}`;
+}
 
 /** Where a freshly added object goes vertically. */
 export type Placement = 'desk' | 'floor' | 'mount';
@@ -82,7 +111,7 @@ export function monitorPreset(p: MonitorParams & { support: 'stand' | 'mount'; s
     group: 'My presets',
     name: monitorName(p),
     category: 'monitor',
-    size: monitorSize(p),
+    size: monitorPanelSize(p),
     monitor: { diagonalIn: p.diagonalIn, aspect: p.aspect, bezelMm: p.bezelMm, support: p.support, ...(stand ? { stand } : {}) },
     placement: 'mount',
     elevation: stand ? stand.h : DEFAULT_MOUNT_ELEVATION,

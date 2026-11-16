@@ -1,8 +1,8 @@
 import type { Layout } from '../model/types';
-import { instanceObb, listenerPlan } from './scene';
-import { obbAabb } from './obb';
-import { degToRad, snapTo } from './units';
-import type { Vec2 } from './vec';
+import { instanceObb, listenerPlan, visibleItems } from './scene';
+import { obbAabb } from '../geometry/obb';
+import { degToRad, snapTo } from '../geometry/math';
+import type { Vec2 } from '../geometry/vec';
 
 export type SnapKind = 'desk-edge' | 'centreline' | 'listener' | 'object-edge' | 'object-centre';
 
@@ -46,10 +46,8 @@ export function buildSnapTargets(layout: Layout, exclude: ReadonlySet<string>): 
     { value: 0, kind: 'desk-edge', span: [-W / 2, W / 2] },
     { value: -D, kind: 'desk-edge', span: [-W / 2, W / 2] },
   ];
-  for (const inst of layout.instances) {
-    if (exclude.has(inst.id) || !inst.visible) continue;
-    const def = layout.definitions[inst.definitionId];
-    if (!def) continue;
+  for (const { inst, def } of visibleItems(layout)) {
+    if (exclude.has(inst.id)) continue;
     const b = obbAabb(instanceObb(inst, def));
     const zSpan: [number, number] = [b.minZ, b.maxZ];
     const xSpan: [number, number] = [b.minX, b.maxX];

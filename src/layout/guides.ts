@@ -1,5 +1,5 @@
-import type { AABB } from './obb';
-import type { Vec2 } from './vec';
+import type { AABB } from '../geometry/obb';
+import type { Vec2 } from '../geometry/vec';
 
 export interface DimensionGuide {
   id: 'left' | 'right' | 'front' | 'back' | 'centre';

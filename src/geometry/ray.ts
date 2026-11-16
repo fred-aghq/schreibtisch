@@ -1,5 +1,5 @@
 import type { Vec3 } from './vec';
-import { add3, dot3, normalize3, scale3, sub3 } from './vec3';
+import { add3, dot3, normalize3, scale3, sub3 } from './vec';
 
 export interface Ray {
   origin: Vec3;

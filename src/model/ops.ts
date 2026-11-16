@@ -1,13 +1,10 @@
-import { makeInstance } from '../model/defaults';
-import { newId } from '../model/ids';
-import { DEFAULT_MOUNT_ELEVATION, DEFAULT_STAND, definitionFromPreset } from '../model/presets';
-import type { Preset } from '../model/presets';
-import type { AspectRatio, Desk, Layout, Listener, ObjectDefinition, ObjectInstance, Settings, Size } from '../model/types';
-import { mirroredPose } from '../geometry/mirror';
-import { monitorSize } from '../geometry/monitor';
-import { listenerPlan } from '../geometry/scene';
-import { yawFromDir } from '../geometry/transform';
-import { normalizeDeg } from '../geometry/units';
+import { makeInstance } from './defaults';
+import { newId } from './ids';
+import { DEFAULT_MOUNT_ELEVATION, DEFAULT_STAND, definitionFromPreset, monitorPanelSize } from './presets';
+import type { Preset } from './presets';
+import type { AspectRatio, BackWall, Desk, Layout, Listener, ObjectDefinition, ObjectInstance, Settings, Size } from './types';
+import { mirrorPose, yawFromDir } from '../geometry/transform';
+import { normalizeDeg } from '../geometry/math';
 
 /** Pure layout operations. Each returns a new Layout (or the same one if nothing changed). */
 
@@ -55,10 +52,26 @@ export function setSettings(layout: Layout, patch: Partial<Settings>): Layout {
   return { ...layout, settings: { ...layout.settings, ...patch } };
 }
 
-/** Delete an instance; garbage-collect its definition if nothing else uses it. */
+/** Add, change or remove (null) the wall behind the desk. */
+export function setBackWall(layout: Layout, backWall: BackWall | null): Layout {
+  return { ...layout, backWall: backWall ? { ...backWall } : null };
+}
+
+export function renameLayout(layout: Layout, name: string): Layout {
+  return name === layout.name ? layout : { ...layout, name };
+}
+
+function findInstance(layout: Layout, id: string): ObjectInstance | undefined {
+  return layout.instances.find((i) => i.id === id);
+}
+
+/**
+ * Delete an instance; garbage-collect its definition if nothing else uses it.
+ * A locked instance can't be deleted (the layout is returned unchanged).
+ */
 export function deleteInstance(layout: Layout, id: string): Layout {
-  const inst = layout.instances.find((i) => i.id === id);
-  if (!inst) return layout;
+  const inst = findInstance(layout, id);
+  if (!inst || inst.locked) return layout;
   const instances = layout.instances
     .filter((i) => i.id !== id)
     .map((i) => (inst.pairId && i.pairId === inst.pairId ? { ...i, pairId: undefined } : i));
@@ -97,21 +110,24 @@ export function pairPartner(layout: Layout, id: string): ObjectInstance | undefi
   return layout.instances.find((i) => i.pairId === inst.pairId && i.id !== id);
 }
 
+export interface PosePatch {
+  position?: Partial<ObjectInstance['position']>;
+  rotation?: Partial<ObjectInstance['rotation']>;
+}
+
 /**
  * Move / rotate an instance. With mirroring on, its pair partner follows, mirrored across the
- * listener's centreline (x → mirrored, yaw → −yaw). A locked partner stays put.
+ * listener's centreline (x → mirrored, yaw → −yaw). A locked instance doesn't move (the layout is
+ * returned unchanged), and a locked partner stays put.
  */
-export function moveInstance(
-  layout: Layout,
-  id: string,
-  patch: { position?: Partial<ObjectInstance['position']>; rotation?: Partial<ObjectInstance['rotation']> },
-): Layout {
+export function moveInstance(layout: Layout, id: string, patch: PosePatch): Layout {
+  if (findInstance(layout, id)?.locked) return layout;
   const next = updateInstance(layout, id, patch);
   if (next === layout || !layout.settings.mirrorPairs) return next;
   const partner = pairPartner(next, id);
   const moved = next.instances.find((i) => i.id === id);
   if (!partner || !moved || partner.locked) return next;
-  return updateInstance(next, partner.id, mirroredPose(moved, layout.listener.x));
+  return updateInstance(next, partner.id, mirrorPose(moved, layout.listener.x));
 }
 
 export interface AddOptions {
@@ -147,7 +163,7 @@ export function addFromPreset(layout: Layout, preset: Preset, opts: AddOptions =
     return { layout: { ...layout, definitions, instances: [...layout.instances, inst] }, instanceIds: [inst.id] };
   }
 
-  const lp = listenerPlan(layout);
+  const lp = { x: layout.listener.x, z: layout.listener.distanceFromFrontEdge };
   const offset = Math.max(W / 2 - def.size.w / 2 - 40, def.size.w);
   const z = opts.at?.z ?? -D + def.size.d / 2 + 120;
   const leftPos = { x: lp.x - offset, y, z };
@@ -164,7 +180,7 @@ export function addFromPreset(layout: Layout, preset: Preset, opts: AddOptions =
   });
   const right = makeInstance(def, {
     label: `Right ${base}`,
-    ...mirroredPose(left, lp.x),
+    ...mirrorPose(left, lp.x),
     role: isSpeaker ? 'speakerR' : null,
     pairId,
   });
@@ -208,7 +224,7 @@ export function regenerateMonitor(layout: Layout, defId: string, p: MonitorEdit)
   const stand = p.support === 'stand' ? (p.stand ?? def.monitor?.stand ?? DEFAULT_STAND) : undefined;
   const next: ObjectDefinition = {
     ...def,
-    size: monitorSize(p),
+    size: monitorPanelSize(p),
     monitor: { diagonalIn: p.diagonalIn, aspect: p.aspect, bezelMm: p.bezelMm, support: p.support, ...(stand ? { stand } : {}) },
   };
   return { ...layout, definitions: { ...layout.definitions, [defId]: next } };

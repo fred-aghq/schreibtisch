@@ -1,11 +1,8 @@
 import { useEffect } from 'react';
-import { CAMERA_PRESETS } from '../geometry/camera';
-import { deleteInstance, duplicateInstance, moveInstance, setListener } from '../store/ops';
+import { isTypingTarget } from '../lib/dom';
+import { CAMERA_PRESETS } from '../layout/cameraPoses';
+import { deleteSelected, duplicateSelected, nudgeSelected, rotateSelected } from '../store/commands';
 import { useStore } from '../store/store';
-
-function isTypingTarget(t: EventTarget | null): boolean {
-  return t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
-}
 
 /** Global keyboard shortcuts. Ignored while typing in a field. */
 export function useShortcuts(): void {
@@ -28,9 +25,6 @@ export function useShortcuts(): void {
         return;
       }
 
-      const sel = s.selection;
-      const layout = s.history.present;
-
       if (key === 'escape') {
         if (s.showShortcuts) s.setShowShortcuts(false);
         else s.select(null);
@@ -41,8 +35,7 @@ export function useShortcuts(): void {
         return;
       }
       if (!mod && key === 'f') {
-        if (s.view === '3d') s.requestCamera('fit');
-        else s.requestFit();
+        s.sendViewCommand(s.view === '3d' ? { kind: 'camera', preset: 'fit' } : { kind: 'fit' });
         return;
       }
       // Number keys: camera presets (switches to 3D).
@@ -50,7 +43,7 @@ export function useShortcuts(): void {
       const preset = CAMERA_PRESETS[presetIndex];
       if (preset) {
         s.setView('3d');
-        s.requestCamera(preset);
+        s.sendViewCommand({ kind: 'camera', preset });
         return;
       }
 
@@ -62,47 +55,28 @@ export function useShortcuts(): void {
         arrowdown: [0, 1],
       };
       const arrow = arrows[key];
-      if (arrow && sel) {
+      if (arrow && s.selection) {
         e.preventDefault();
         const step = e.shiftKey ? 10 : 1;
-        const [dx, dz] = arrow;
-        if (sel.kind === 'listener') {
-          s.apply((l) => setListener(l, { x: l.listener.x + dx * step, distanceFromFrontEdge: l.listener.distanceFromFrontEdge + dz * step }));
-        } else {
-          const inst = layout.instances.find((i) => i.id === sel.id);
-          if (inst && !inst.locked) {
-            s.apply((l) => moveInstance(l, inst.id, { position: { x: inst.position.x + dx * step, z: inst.position.z + dz * step } }));
-          }
-        }
+        nudgeSelected(arrow[0] * step, arrow[1] * step);
         return;
       }
 
-      if (sel?.kind !== 'instance') return;
-      const inst = layout.instances.find((i) => i.id === sel.id);
-      if (!inst) return;
+      if (s.selection?.kind !== 'instance') return;
 
       // Q / E rotate 1° (Shift = 15°). Q turns counter-clockwise when seen from above.
-      if (!mod && (key === 'q' || key === 'e') && !inst.locked) {
-        const step = e.shiftKey ? 15 : 1;
-        const dir = key === 'q' ? 1 : -1;
-        s.apply((l) => moveInstance(l, inst.id, { rotation: { yaw: inst.rotation.yaw + dir * step } }));
+      if (!mod && (key === 'q' || key === 'e')) {
+        rotateSelected((key === 'q' ? 1 : -1) * (e.shiftKey ? 15 : 1));
         return;
       }
       if (mod && key === 'd') {
         e.preventDefault();
-        let newId = inst.id;
-        s.apply((l) => {
-          const r = duplicateInstance(l, inst.id);
-          newId = r.instanceId;
-          return r.layout;
-        });
-        s.select({ kind: 'instance', id: newId });
+        duplicateSelected();
         return;
       }
-      if ((key === 'delete' || key === 'backspace') && !inst.locked) {
+      if (key === 'delete' || key === 'backspace') {
         e.preventDefault();
-        s.apply((l) => deleteInstance(l, inst.id));
-        s.select(null);
+        deleteSelected();
       }
     };
     window.addEventListener('keydown', onKey);

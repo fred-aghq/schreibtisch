@@ -1,15 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { formatMm, niceLength, normalizeDeg, roundMm, snapTo } from './units';
+import { niceLength, normalizeDeg, snapTo } from './math';
 
-describe('units', () => {
-  it('rounds to whole mm without negative zero', () => {
-    expect(roundMm(12.4)).toBe(12);
-    expect(roundMm(12.5)).toBe(13);
-    expect(Object.is(roundMm(-0.2), 0)).toBe(true);
-    expect(formatMm(1599.6)).toBe('1600 mm');
-    expect(formatMm(-3.2, false)).toBe('-3');
-  });
-
+describe('math', () => {
   it('normalises angles to (-180, 180]', () => {
     expect(normalizeDeg(0)).toBe(0);
     expect(normalizeDeg(180)).toBe(180);

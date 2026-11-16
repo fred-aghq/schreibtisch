@@ -2,10 +2,12 @@ import { OrbitControls } from '@react-three/drei';
 import { Canvas, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import { Raycaster, Vector2 } from 'three';
-import { CAMERA_PRESETS, PRESET_LABELS } from '../../geometry/camera';
-import { findOverlaps } from '../../geometry/overlap';
+import { CAMERA_PRESETS } from '../../layout/cameraPoses';
+import type { CameraPreset } from '../../layout/cameraPoses';
+import { findOverlaps } from '../../layout/overlap';
+import { visibleItems } from '../../layout/scene';
 import { horizontalPlane, intersectRayPlane } from '../../geometry/ray';
-import { setSettings } from '../../store/ops';
+import { setSettings } from '../../model/ops';
 import { useLayout, useStore } from '../../store/store';
 import { CameraRig } from './CameraRig';
 import { LabelLayer, LabelProjector } from './labels';
@@ -13,11 +15,13 @@ import { deskLabels } from './sceneLabels';
 import { SCENE_COLOURS } from './colours';
 import { useDragController } from './dragController';
 import { BackWall, Desk, DeskGrid, Floor, Listener3D, ObjectMesh } from './meshes';
+import { PRESET_LABELS } from './presetLabels';
 import styles from './SceneView.module.css';
 
 export default function SceneView() {
   const activePreset = useStore((s) => s.activePreset);
-  const requestCamera = useStore((s) => s.requestCamera);
+  const sendViewCommand = useStore((s) => s.sendViewCommand);
+  const requestCamera = (preset: CameraPreset | 'fit') => sendViewCommand({ kind: 'camera', preset });
   const apply = useStore((s) => s.apply);
   const layout = useLayout();
   const showFloor = layout.settings.showFloor;
@@ -99,11 +103,9 @@ function SceneContent() {
       {layout.settings.showGrid && <DeskGrid layout={layout} colours={colours} />}
       {layout.settings.showFloor && <Floor layout={layout} colours={colours} />}
       <BackWall layout={layout} colours={colours} />
-      {layout.instances.map((inst) => {
-        const def = layout.definitions[inst.definitionId];
-        if (!def || !inst.visible) return null;
-        return <ObjectMesh key={inst.id} inst={inst} def={def} selected={inst.id === selectedId} overlapping={overlaps.has(inst.id)} colours={colours} startDrag={startDrag} />;
-      })}
+      {visibleItems(layout).map(({ inst, def }) => (
+        <ObjectMesh key={inst.id} inst={inst} def={def} selected={inst.id === selectedId} overlapping={overlaps.has(inst.id)} colours={colours} startDrag={startDrag} />
+      ))}
       <Listener3D layout={layout} selected={selection?.kind === 'listener'} colours={colours} startDrag={startDrag} />
     </>
   );

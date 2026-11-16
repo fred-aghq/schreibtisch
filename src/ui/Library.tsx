@@ -1,37 +1,20 @@
 import { useState } from 'react';
-import { monitorSize } from '../geometry/monitor';
 import { CATEGORY_INFO } from '../model/categories';
-import { BUILT_IN_PRESETS, DEFAULT_MONITOR, monitorPreset, PRESET_GROUPS } from '../model/presets';
+import { ASPECT_RATIOS, BUILT_IN_PRESETS, DEFAULT_MONITOR, monitorPanelSize, monitorPreset, PRESET_GROUPS } from '../model/presets';
 import type { Preset } from '../model/presets';
 import type { AspectRatio } from '../model/types';
-import { addFromPreset } from '../store/ops';
+import { addPreset } from '../store/commands';
 import { useStore } from '../store/store';
 import { Icon } from './Icon';
 import { NumberField } from './NumberField';
 import p from './panel.module.css';
 import s from './Sidebar.module.css';
 
-const ASPECT_OPTIONS: AspectRatio[] = ['16:9', '16:10', '21:9', '32:9'];
-
-function useAdd() {
-  const apply = useStore((st) => st.apply);
-  const select = useStore((st) => st.select);
-  return (preset: Preset, pair: boolean) => {
-    let ids: string[] = [];
-    apply((l) => {
-      const r = addFromPreset(l, preset, { pair });
-      ids = r.instanceIds;
-      return r.layout;
-    });
-    const first = ids[0];
-    if (first) select({ kind: 'instance', id: first });
-  };
-}
+const add = (preset: Preset, pair: boolean) => addPreset(preset, { pair });
 
 export function Library() {
   const userPresets = useStore((st) => st.userPresets);
   const removeUserPreset = useStore((st) => st.removeUserPreset);
-  const add = useAdd();
   const all = [...BUILT_IN_PRESETS, ...userPresets];
 
   return (
@@ -99,8 +82,7 @@ export function Library() {
 
 function MonitorGenerator() {
   const [m, setM] = useState(DEFAULT_MONITOR);
-  const add = useAdd();
-  const size = monitorSize(m);
+  const size = monitorPanelSize(m);
   return (
     <section className={`${s.group} ${s.card}`}>
       <h3 className={s.groupTitle}>Monitor</h3>
@@ -108,7 +90,7 @@ function MonitorGenerator() {
       <label className={p.selectField}>
         Aspect
         <select className={p.select} value={m.aspect} onChange={(e) => setM({ ...m, aspect: e.currentTarget.value as AspectRatio })}>
-          {ASPECT_OPTIONS.map((a) => (
+          {ASPECT_RATIOS.map((a) => (
             <option key={a}>{a}</option>
           ))}
         </select>
