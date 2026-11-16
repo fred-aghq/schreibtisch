@@ -81,7 +81,9 @@ Saved and imported layouts go through `model/migrate.ts`: older schema versions 
 
 ### GitHub Pages
 
-`.github/workflows/pages.yml` builds and deploys every push to `main`. One-time setup: **Settings → Pages → Source: GitHub Actions**. The repository must be public on a free plan.
+`.github/workflows/pages.yml` builds every push to `main` and publishes it to the root of the `gh-pages` branch. One-time setup: **Settings → Pages → Source: Deploy from a branch → `gh-pages` / `(root)`**. The repository must be public on a free plan.
+
+`.github/workflows/preview.yml` publishes each pull request to `pr-preview/pr-<number>/` on the same branch (for example `https://fred-aghq.github.io/schreibtisch/pr-preview/pr-12/`), comments the link on the PR, and removes it when the PR closes. Production deploys leave `pr-preview/` alone. PRs from forks aren't previewed. Preview builds set `VITE_STORAGE_NAMESPACE`, so their saved layouts, presets and theme are kept apart from production's.
 
 The build reads `BASE_PATH` (for example `/schreibtisch/`) so assets resolve under the project-site path.
 

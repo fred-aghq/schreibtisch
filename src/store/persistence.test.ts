@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDefaultLayout } from '../model/defaults';
-import { loadCurrentLayout, loadUserPresets } from './persistence';
+import { loadCurrentLayout, loadUserPresets, storageKey } from './persistence';
 
 describe('persistence', () => {
   let data: Map<string, string>;
@@ -46,5 +46,11 @@ describe('persistence', () => {
     expect(loadCurrentLayout()).toBeNull();
     data.set('schreibtisch:current-layout', JSON.stringify(createDefaultLayout()));
     expect(loadCurrentLayout()).not.toBeNull();
+  });
+
+  it('namespaces keys only when a storage namespace is set', () => {
+    expect(storageKey('theme', undefined)).toBe('schreibtisch:theme');
+    expect(storageKey('theme', '')).toBe('schreibtisch:theme');
+    expect(storageKey('theme', 'pr-12')).toBe('schreibtisch@pr-12:theme');
   });
 });
