@@ -4,9 +4,18 @@ import type { Layout } from '../model/types';
 import type { Preset } from '../model/presets';
 import type { Theme } from './store';
 
-const CURRENT_KEY = 'schreibtisch:current-layout';
-const THEME_KEY = 'schreibtisch:theme';
-const PRESETS_KEY = 'schreibtisch:presets';
+/**
+ * Builds a localStorage key. PR preview builds set VITE_STORAGE_NAMESPACE (e.g. "pr-12")
+ * because they share the github.io origin with production; namespacing keeps a preview
+ * from reading or overwriting the production data. Production keys are unchanged.
+ */
+export function storageKey(name: string, namespace: string | undefined = import.meta.env.VITE_STORAGE_NAMESPACE): string {
+  return namespace ? `schreibtisch@${namespace}:${name}` : `schreibtisch:${name}`;
+}
+
+const CURRENT_KEY = storageKey('current-layout');
+const THEME_KEY = storageKey('theme');
+const PRESETS_KEY = storageKey('presets');
 
 function storage(): Storage | null {
   try {
