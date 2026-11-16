@@ -5,6 +5,7 @@ import { ShortcutsDialog } from '../ui/ShortcutsDialog';
 import { Sidebar } from '../ui/Sidebar';
 import { StatusBar } from '../ui/StatusBar';
 import { TopBar } from '../ui/TopBar';
+import { SetupWizard } from '../ui/wizard/SetupWizard';
 import { TriangleCard } from '../ui/triangle/TriangleCard';
 import { PlanView } from '../views/plan2d/PlanView';
 import styles from './App.module.css';
@@ -43,6 +44,7 @@ export function App() {
       </aside>
       <StatusBar />
       <ShortcutsDialog />
+      <SetupWizard />
     </div>
   );
 }

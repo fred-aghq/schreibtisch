@@ -2,6 +2,7 @@ import { migrateLayout } from '../model/migrate';
 import { parseWith, PresetSchema } from '../model/schema';
 import type { Layout } from '../model/types';
 import type { Preset } from '../model/presets';
+import type { SavedLayout } from './savedLayouts';
 import type { Theme } from './store';
 
 /**
@@ -16,6 +17,8 @@ export function storageKey(name: string, namespace: string | undefined = import.
 const CURRENT_KEY = storageKey('current-layout');
 const THEME_KEY = storageKey('theme');
 const PRESETS_KEY = storageKey('presets');
+const SAVED_KEY = storageKey('saved-layouts');
+const ONBOARDED_KEY = storageKey('onboarded');
 
 function storage(): Storage | null {
   try {
@@ -84,5 +87,60 @@ export function saveUserPresets(presets: readonly Preset[]): void {
     storage()?.setItem(PRESETS_KEY, JSON.stringify(presets));
   } catch (e) {
     console.warn('Could not save presets', e);
+  }
+}
+
+/** Saved layouts, each validated (and migrated) on load; invalid entries are skipped. */
+export function loadSavedLayouts(): SavedLayout[] {
+  try {
+    const raw = storage()?.getItem(SAVED_KEY);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.flatMap((entry: unknown) => {
+      if (typeof entry !== 'object' || entry === null) return [];
+      const { layout, savedAt } = entry as { layout?: unknown; savedAt?: unknown };
+      const r = migrateLayout(layout);
+      if (!r.ok) {
+        console.warn('Ignoring a saved layout:', r.errors);
+        return [];
+      }
+      return [{ layout: r.layout, savedAt: typeof savedAt === 'string' ? savedAt : '' }];
+    });
+  } catch (e) {
+    console.warn('Could not read saved layouts', e);
+    return [];
+  }
+}
+
+export function saveSavedLayouts(list: readonly SavedLayout[]): boolean {
+  try {
+    storage()?.setItem(SAVED_KEY, JSON.stringify(list));
+    return true;
+  } catch (e) {
+    console.warn('Could not save layouts', e);
+    return false;
+  }
+}
+
+/** True if this browser has any Schreibtisch data at all (for this build's storage namespace). */
+export function hasStoredData(): boolean {
+  try {
+    const s = storage();
+    if (!s) return false;
+    const prefix = storageKey('');
+    for (let i = 0; i < s.length; i++) if (s.key(i)?.startsWith(prefix)) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/** Remember that the setup wizard has been shown, so it doesn't open by itself again. */
+export function markOnboarded(): void {
+  try {
+    storage()?.setItem(ONBOARDED_KEY, '1');
+  } catch {
+    /* ignore */
   }
 }

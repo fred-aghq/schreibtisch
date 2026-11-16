@@ -3,6 +3,7 @@ import { renameLayout } from '../model/ops';
 import { useLayout, useStore } from '../store/store';
 import { toggleTriangle } from '../store/commands';
 import { Icon } from './Icon';
+import { LayoutsMenu } from './LayoutsMenu';
 import { TextField } from './TextField';
 import s from './TopBar.module.css';
 
@@ -13,7 +14,7 @@ export function TopBar() {
   const view = useStore((st) => st.view);
   const theme = useStore((st) => st.theme);
   const showTriangle = layout.settings.showTriangle;
-  const { apply, undo, redo, setView, toggleTheme, replaceLayout, sendViewCommand, setShowShortcuts } = useStore.getState();
+  const { apply, undo, redo, setView, toggleTheme, replaceLayout, sendViewCommand, setShowShortcuts, setWizard } = useStore.getState();
 
   return (
     <header className={s.bar}>
@@ -22,6 +23,7 @@ export function TopBar() {
         <span className={s.app}>Schreibtisch</span>
         <span className={s.slash}>/</span>
         <TextField className={s.name} value={layout.name} aria-label="Layout name" onCommit={(name) => apply((l) => renameLayout(l, name))} />
+        <LayoutsMenu />
       </div>
 
       <div className={s.centre}>
@@ -52,6 +54,9 @@ export function TopBar() {
           <Icon name="redo" />
         </button>
         <span className={s.sep} />
+        <button type="button" className={s.text} title="Set up a new layout step by step: desk, you, and your gear" onClick={() => setWizard('manual')}>
+          Setup…
+        </button>
         <button
           type="button"
           className={s.text}
