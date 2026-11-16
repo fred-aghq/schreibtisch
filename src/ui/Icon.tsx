@@ -14,6 +14,7 @@ const PATHS = {
   fit: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5',
   magnet: 'M6 3v8a6 6 0 0 0 12 0V3M6 7h4M14 7h4M10 3v8a2 2 0 0 0 4 0V3',
   grid: 'M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18',
+  triangle: 'M4 5h16L12 20z',
 } as const;
 
 export type IconName = keyof typeof PATHS;

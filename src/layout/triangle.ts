@@ -88,6 +88,8 @@ export interface SpeakerReading {
     angle: number | null;
     /** Pitch that points the tweeter at ear height (equal to `angle`). */
     suggestedPitch: number | null;
+    /** Suggested minus current pitch (°): how far the speaker is from pointing at ear height. */
+    tiltError: number | null;
   };
   /** Gap from the cabinet's rear to the back wall, mm (negative = it pokes through). Null with no wall. */
   wallDistance: number | null;
@@ -144,7 +146,7 @@ function readSpeaker(layout: Layout, inst: ObjectInstance, def: ObjectDefinition
     toeInError: atAim ? null : signedAngleDeg(forward, toAim),
     // Exact: the acoustic point lies on the forward axis through the footprint centre.
     requiredYaw: atAim || Math.hypot(fromCentre.x, fromCentre.z) < EPS ? null : yawFromDir(fromCentre),
-    vertical: { dy, angle, suggestedPitch: angle },
+    vertical: { dy, angle, suggestedPitch: angle, tiltError: angle === null ? null : angle - inst.rotation.pitch },
     wallDistance,
   };
 }

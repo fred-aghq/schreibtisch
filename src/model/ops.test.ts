@@ -9,6 +9,7 @@ import {
   moveInstance,
   renameLayout,
   setBackWall,
+  setSpeakerRole,
   updateDefinition,
   updateInstance,
 } from './ops';
@@ -118,5 +119,31 @@ describe('layout-level ops', () => {
     const l = createDefaultLayout();
     expect(renameLayout(l, 'Studio').name).toBe('Studio');
     expect(renameLayout(l, l.name)).toBe(l);
+  });
+});
+
+describe('speaker roles', () => {
+  it('assigning a role takes it from whoever had it', () => {
+    const l = createDefaultLayout();
+    const kb = l.instances.find((i) => i.label === 'Keyboard')!;
+    const next = setSpeakerRole(l, kb.id, 'speakerL');
+    expect(next.instances.filter((i) => i.role === 'speakerL').map((i) => i.id)).toEqual([kb.id]);
+    expect(next.instances.filter((i) => i.role === 'speakerR')).toHaveLength(1);
+  });
+
+  it('clearing a role leaves the others alone, and a no-op returns the same layout', () => {
+    const l = createDefaultLayout();
+    const left = l.instances.find((i) => i.role === 'speakerL')!;
+    const next = setSpeakerRole(l, left.id, null);
+    expect(next.instances.find((i) => i.id === left.id)!.role).toBeNull();
+    expect(next.instances.filter((i) => i.role === 'speakerR')).toHaveLength(1);
+    expect(setSpeakerRole(l, left.id, 'speakerL')).toBe(l);
+  });
+
+  it('works on locked objects (a role is not a pose)', () => {
+    const l = createDefaultLayout();
+    const kb = l.instances.find((i) => i.label === 'Keyboard')!;
+    const locked = updateInstance(l, kb.id, { locked: true });
+    expect(setSpeakerRole(locked, kb.id, 'speakerR').instances.find((i) => i.id === kb.id)!.role).toBe('speakerR');
   });
 });

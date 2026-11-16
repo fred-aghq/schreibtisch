@@ -115,3 +115,33 @@
   margin: 0 4px;
   background: var(--border);
 }
+
+.centre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle,
+.toggleOn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.toggle:hover {
+  color: var(--text);
+}
+
+.toggleOn {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+}

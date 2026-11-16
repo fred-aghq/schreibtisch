@@ -7,6 +7,8 @@ export interface SceneLabel {
   id: string;
   text: string;
   position: Vec3;
+  /** Optional colour hint, exposed as data-tone for CSS. */
+  tone?: 'green' | 'amber' | 'red' | 'accent';
 }
 
 /** DOM labels rendered outside the canvas (React), positioned every frame by LabelProjector. */
@@ -17,6 +19,7 @@ export function LabelLayer({ labels, layerRef, className }: { labels: SceneLabel
         <span
           key={l.id}
           className={className}
+          data-tone={l.tone}
           data-x={l.position.x}
           data-y={l.position.y}
           data-z={l.position.z}

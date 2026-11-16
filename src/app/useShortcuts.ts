@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { isTypingTarget } from '../lib/dom';
 import { CAMERA_PRESETS } from '../layout/cameraPoses';
-import { deleteSelected, duplicateSelected, nudgeSelected, rotateSelected } from '../store/commands';
+import { deleteSelected, duplicateSelected, nudgeSelected, rotateSelected, toggleTriangle } from '../store/commands';
 import { useStore } from '../store/store';
 
 /** Global keyboard shortcuts. Ignored while typing in a field. */
@@ -32,6 +32,10 @@ export function useShortcuts(): void {
       }
       if (e.key === '?') {
         s.setShowShortcuts(!s.showShortcuts);
+        return;
+      }
+      if (!mod && !e.altKey && key === 't') {
+        toggleTriangle();
         return;
       }
       if (!mod && key === 'f') {

@@ -6,12 +6,15 @@ import { CAMERA_PRESETS } from '../../layout/cameraPoses';
 import type { CameraPreset } from '../../layout/cameraPoses';
 import { findOverlaps } from '../../layout/overlap';
 import { visibleItems } from '../../layout/scene';
+import { analyzeTriangle } from '../../layout/triangle';
+import type { TriangleReading } from '../../layout/triangle';
 import { horizontalPlane, intersectRayPlane } from '../../geometry/ray';
 import { setSettings } from '../../model/ops';
 import { useLayout, useStore } from '../../store/store';
 import { CameraRig } from './CameraRig';
 import { LabelLayer, LabelProjector } from './labels';
-import { deskLabels } from './sceneLabels';
+import { deskLabels, triangleLabels } from './sceneLabels';
+import { TriangleOverlay3D } from './TriangleOverlay3D';
 import { SCENE_COLOURS } from './colours';
 import { useDragController } from './dragController';
 import { BackWall, Desk, DeskGrid, Floor, Listener3D, ObjectMesh } from './meshes';
@@ -26,7 +29,9 @@ export default function SceneView() {
   const layout = useLayout();
   const showFloor = layout.settings.showFloor;
   const labelLayer = useRef<HTMLDivElement>(null);
-  const labels = useMemo(() => deskLabels(layout), [layout]);
+  const showTriangle = layout.settings.showTriangle;
+  const triangle = useMemo(() => (showTriangle ? analyzeTriangle(layout) : null), [layout, showTriangle]);
+  const labels = useMemo(() => [...deskLabels(layout), ...(triangle ? triangleLabels(triangle, layout) : [])], [layout, triangle]);
 
   return (
     <div className={styles.container}>
@@ -39,7 +44,7 @@ export default function SceneView() {
           if (e.button === 0) useStore.getState().select(null);
         }}
       >
-        <SceneContent />
+        <SceneContent triangle={triangle} />
         <LabelProjector layerRef={labelLayer} />
       </Canvas>
       <LabelLayer labels={labels} layerRef={labelLayer} className={styles.dimLabel ?? ''} />
@@ -70,7 +75,7 @@ export default function SceneView() {
   );
 }
 
-function SceneContent() {
+function SceneContent({ triangle }: { triangle: TriangleReading | null }) {
   const layout = useLayout();
   const selection = useStore((s) => s.selection);
   const theme = useStore((s) => s.theme);
@@ -107,6 +112,7 @@ function SceneContent() {
         <ObjectMesh key={inst.id} inst={inst} def={def} selected={inst.id === selectedId} overlapping={overlaps.has(inst.id)} colours={colours} startDrag={startDrag} />
       ))}
       <Listener3D layout={layout} selected={selection?.kind === 'listener'} colours={colours} startDrag={startDrag} />
+      {layout.settings.showTriangle && <TriangleOverlay3D t={triangle} layout={layout} colours={colours} />}
     </>
   );
 }

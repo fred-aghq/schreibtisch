@@ -3,7 +3,7 @@ import { updateInstance } from '../model/ops';
 import type { Layout } from '../model/types';
 import { expectFinite, H, perfectLayout, speakerLayout } from './triangle.fixtures';
 import { analyzeTriangle } from './triangle';
-import { aimSpeakersAtListener, moveListenerToIdeal, moveSpeakersToIdeal, tiltSpeakersToEars } from './triangleFixes';
+import { aimSpeakersAtListener, fixGhosts, moveListenerToIdeal, moveSpeakersToIdeal, tiltSpeakersToEars } from './triangleFixes';
 
 const read = (l: Layout) => {
   const t = analyzeTriangle(l)!;
@@ -121,5 +121,51 @@ describe('aim and tilt', () => {
     const t = read(aimSpeakersAtListener(l));
     expect(t.left.toeInError).toBeCloseTo(0, 9);
     expect(read(moveListenerToIdeal(l)).corners.listener.z).toBeCloseTo(600, 6);
+  });
+});
+
+describe('fix previews', () => {
+  it('lists what a fix would move', () => {
+    const l = messy();
+    const listener = fixGhosts(l, 'listener', 'distance')!;
+    expect(listener.speakers).toHaveLength(0);
+    expect(listener.listener).not.toBeNull();
+    expect(listener.reading!.angles!.listener).toBeCloseTo(60, 6);
+
+    const aim = fixGhosts(l, 'aim', 'distance')!;
+    expect(aim.speakers.map((s) => s.inst.label).sort()).toEqual(['L', 'R']);
+    expect(aim.listener).toBeNull();
+  });
+
+  it('is null when nothing would change', () => {
+    expect(fixGhosts(lock(lock(messy(), 'L'), 'R'), 'aim', 'distance')).toBeNull();
+  });
+});
+
+describe('fixes are idempotent', () => {
+  it('applying a fix twice changes nothing the second time', () => {
+    const m = messy();
+    // Raise the ears so there is something to tilt toward.
+    const l = { ...m, listener: { ...m.listener, earHeightFromFloor: m.listener.earHeightFromFloor + 150 } };
+    for (const fix of [aimSpeakersAtListener, moveListenerToIdeal, (x: Layout) => moveSpeakersToIdeal(x, 'distance'), (x: Layout) => moveSpeakersToIdeal(x, 'spacing'), tiltSpeakersToEars]) {
+      const once = fix(l);
+      expect(once).not.toBe(l);
+      expect(fix(once)).toBe(once);
+    }
+  });
+
+  it('a perfect, level setup needs no fixes at all', () => {
+    const l = perfectLayout();
+    expect(aimSpeakersAtListener(l)).toBe(l);
+    expect(moveListenerToIdeal(l)).toBe(l);
+    expect(moveSpeakersToIdeal(l, 'distance')).toBe(l);
+    expect(tiltSpeakersToEars(l)).toBe(l);
+  });
+
+  it('after tilting, the tilt error is zero', () => {
+    const l = messy();
+    const low = { ...l, listener: { ...l.listener, earHeightFromFloor: l.listener.earHeightFromFloor + 200 } };
+    expect(read(low).left.vertical.tiltError!).toBeGreaterThan(5);
+    expect(read(tiltSpeakersToEars(low)).left.vertical.tiltError).toBeCloseTo(0, 2);
   });
 });
