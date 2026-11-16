@@ -6,7 +6,9 @@ import { createDefaultLayout } from '../model/defaults';
 import type { Layout } from '../model/types';
 import * as H from './history';
 import type { Preset } from '../model/presets';
-import { saveTheme, saveUserPresets } from './persistence';
+import { saveSavedLayouts, saveTheme, saveUserPresets } from './persistence';
+import { removeSaved, upsertSaved } from './savedLayouts';
+import type { SavedLayout } from './savedLayouts';
 
 export type Theme = 'dark' | 'light';
 export type Selection = { kind: 'instance'; id: string } | { kind: 'listener' } | null;
@@ -46,6 +48,9 @@ export interface AppState {
   /** The user's saved definitions (library "My presets"), kept outside any single layout. */
   userPresets: Preset[];
   showShortcuts: boolean;
+  /** Layouts saved by name in this browser, most recently saved first. */
+  savedLayouts: SavedLayout[];
+  wizardOpen: boolean;
   /** The triangle fix being hovered, previewed as ghosts in both views. */
   fixPreview: TriangleFix | null;
   /** How "Move speakers to ideal" sizes the triangle. */
@@ -77,6 +82,12 @@ export interface AppState {
   removeUserPreset: (id: string) => void;
   setShowShortcuts: (show: boolean) => void;
   setFixPreview: (fix: TriangleFix | null) => void;
+  /** Save the current layout under its name (replacing its earlier save). False if storage failed. */
+  saveLayout: () => boolean;
+  /** Make a saved layout the current one (fresh undo history). */
+  openSavedLayout: (id: string) => void;
+  deleteSavedLayout: (id: string) => void;
+  setWizardOpen: (open: boolean) => void;
   setSpeakerFitMode: (mode: SpeakerFitMode) => void;
 }
 
@@ -99,6 +110,8 @@ export const useStore = create<AppState>()((set, get) => ({
   activePreset: null,
   userPresets: [],
   showShortcuts: false,
+  savedLayouts: [],
+  wizardOpen: false,
   fixPreview: null,
   speakerFitMode: 'distance',
 
@@ -150,6 +163,23 @@ export const useStore = create<AppState>()((set, get) => ({
     }),
   setShowShortcuts: (showShortcuts) => set({ showShortcuts }),
   setFixPreview: (fixPreview) => set({ fixPreview }),
+  saveLayout: () => {
+    const savedLayouts = upsertSaved(get().savedLayouts, get().history.present, new Date().toISOString());
+    if (!saveSavedLayouts(savedLayouts)) return false;
+    set({ savedLayouts });
+    return true;
+  },
+  openSavedLayout: (id) => {
+    const entry = get().savedLayouts.find((s) => s.layout.id === id);
+    if (entry) get().replaceLayout(structuredClone(entry.layout));
+  },
+  deleteSavedLayout: (id) =>
+    set((s) => {
+      const savedLayouts = removeSaved(s.savedLayouts, id);
+      saveSavedLayouts(savedLayouts);
+      return { savedLayouts };
+    }),
+  setWizardOpen: (wizardOpen) => set({ wizardOpen }),
   setSpeakerFitMode: (speakerFitMode) => set({ speakerFitMode }),
 }));
 

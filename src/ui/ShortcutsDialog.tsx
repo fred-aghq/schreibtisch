@@ -11,6 +11,7 @@ const GROUPS: { title: string; rows: [string, string][] }[] = [
       ['Del', 'Delete'],
       ['Ctrl+Z', 'Undo'],
       ['Ctrl+Shift+Z', 'Redo'],
+      ['Ctrl+S', 'Save layout'],
       ['Esc', 'Deselect / cancel drag'],
     ],
   },

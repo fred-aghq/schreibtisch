@@ -1,18 +1,23 @@
 import { debounce } from '../lib/debounce';
 import { createHistory } from './history';
-import { loadCurrentLayout, loadTheme, loadUserPresets, saveCurrentLayout } from './persistence';
+import { hasStoredData, loadCurrentLayout, loadSavedLayouts, loadTheme, loadUserPresets, saveCurrentLayout } from './persistence';
 import { useStore } from './store';
 
 export const AUTOSAVE_MS = 400;
 
 /**
- * Load the saved layout, theme and user presets into the store, then autosave the layout
+ * Load the saved layout, theme, user presets and saved layouts into the store. In a fresh browser
+ * (no Schreibtisch data at all) the setup wizard opens. Then autosave then autosave the layout
  * (debounced) whenever it changes. Pending saves are flushed when the page is hidden or closed,
  * so a quick reload never loses the last edit. Returns a function that undoes the wiring.
  */
 export function initStore(): () => void {
+  // Check before anything below can write to storage.
+  const freshBrowser = !hasStoredData();
   const saved = loadCurrentLayout();
   useStore.setState({
+    savedLayouts: loadSavedLayouts(),
+    wizardOpen: freshBrowser,
     ...(saved ? { history: createHistory(saved), selection: null } : {}),
     theme: loadTheme(),
     userPresets: loadUserPresets(),

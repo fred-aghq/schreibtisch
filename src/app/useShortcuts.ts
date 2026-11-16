@@ -19,6 +19,11 @@ export function useShortcuts(): void {
         else s.undo();
         return;
       }
+      if (mod && key === 's') {
+        e.preventDefault();
+        s.saveLayout();
+        return;
+      }
       if (mod && key === 'y') {
         e.preventDefault();
         s.redo();

@@ -168,6 +168,10 @@ describe('initStore', () => {
       getItem: (k: string) => data.get(k) ?? null,
       setItem: (k: string, v: string) => void data.set(k, v),
       removeItem: (k: string) => void data.delete(k),
+      key: (i: number) => [...data.keys()][i] ?? null,
+      get length() {
+        return data.size;
+      },
     });
     vi.stubGlobal('window', new EventTarget());
     vi.stubGlobal('document', Object.assign(new EventTarget(), { visibilityState: 'visible' }));
@@ -192,6 +196,39 @@ describe('initStore', () => {
     expect(st.history.past).toHaveLength(0);
     expect(st.theme).toBe('light');
     expect(st.userPresets.map((p) => p.name)).toEqual(['My box']);
+  });
+
+  it('opens the setup wizard only in a fresh browser', () => {
+    dispose = initStore();
+    expect(useStore.getState().wizardOpen).toBe(true);
+    dispose();
+    data.set('schreibtisch:theme', 'dark');
+    dispose = initStore();
+    expect(useStore.getState().wizardOpen).toBe(false);
+  });
+
+  it('saves, lists, opens and deletes named layouts', () => {
+    dispose = initStore();
+    const s = useStore.getState();
+    s.apply((l) => renameLayout(l, 'Studio'));
+    expect(s.saveLayout()).toBe(true);
+    const studioId = layout().id;
+    expect(JSON.parse(data.get('schreibtisch:saved-layouts')!)[0].layout.name).toBe('Studio');
+
+    s.replaceLayout(renameLayout(createDefaultLayout(), 'Other'));
+    s.saveLayout();
+    expect(useStore.getState().savedLayouts.map((x) => x.layout.name)).toEqual(['Other', 'Studio']);
+
+    s.openSavedLayout(studioId);
+    expect(layout().name).toBe('Studio');
+    expect(useStore.getState().history.past).toHaveLength(0);
+
+    s.deleteSavedLayout(studioId);
+    expect(useStore.getState().savedLayouts.map((x) => x.layout.name)).toEqual(['Other']);
+    // Saved layouts survive a reload.
+    dispose();
+    dispose = initStore();
+    expect(useStore.getState().savedLayouts.map((x) => x.layout.name)).toEqual(['Other']);
   });
 
   it('keeps the default layout when nothing is saved, and does not save until something changes', () => {
