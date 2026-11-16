@@ -1,0 +1,43 @@
+name: Deploy PR preview
+
+# Each PR is built and published to gh-pages under pr-preview/pr-<number>/,
+# e.g. https://<owner>.github.io/<repo>/pr-preview/pr-12/. The preview is
+# removed when the PR closes.
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  preview:
+    # PRs from forks get a read-only token and can't push to gh-pages.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        if: github.event.action != 'closed'
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+        if: github.event.action != 'closed'
+      - name: Build for /<repo>/pr-preview/pr-<number>/
+        if: github.event.action != 'closed'
+        run: npm run build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.pull_request.number }}/
+          # Previews share the github.io origin with production; keep their saved data separate.
+          VITE_STORAGE_NAMESPACE: pr-${{ github.event.pull_request.number }}
+      - uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: dist
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview

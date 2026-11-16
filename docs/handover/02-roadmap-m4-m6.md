@@ -14,7 +14,7 @@ File paths assume the cleanup refactor (doc 1) has been merged. If it hasn't, th
 - **No personal seed data.** The user dropped their own setup (T7V, 27"/28"/21" monitors) from the app. Fresh layouts use generic, approximate objects.
 - **Configurable values:** desk height, listener distance and ear height must stay configurable. They are.
 - The user is actively using the live site, so don't break saved layouts. Bump `schemaVersion` and add a migration for any model change.
-- **Deployment:** GitHub Pages via `.github/workflows/pages.yml` on push to `main`, at `https://fred-aghq.github.io/schreibtisch/` (`BASE_PATH=/schreibtisch/`). CI is in `ci.yml`.
+- **Deployment:** GitHub Pages (`gh-pages` branch) via `.github/workflows/pages.yml` on push to `main`, with PR previews under `pr-preview/pr-<n>/` via `preview.yml`, at `https://fred-aghq.github.io/schreibtisch/` (`BASE_PATH=/schreibtisch/`). CI is in `ci.yml`.
 
 ## What exists (Milestones 1–3 plus the cleanup)
 - **Stack:** Vite 8, React 19, TypeScript 6 (strict, `noUncheckedIndexedAccess`), zustand 5, three 0.187, @react-three/fiber 9 / drei 10, Vitest 5, ESLint 10 with typescript-eslint and react-hooks 7 (React Compiler rules), CSS modules with CSS variables (dark default, light mode), zod 4.
