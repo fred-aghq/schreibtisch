@@ -14,7 +14,7 @@ export function TopBar() {
   const view = useStore((st) => st.view);
   const theme = useStore((st) => st.theme);
   const showTriangle = layout.settings.showTriangle;
-  const { apply, undo, redo, setView, toggleTheme, replaceLayout, sendViewCommand, setShowShortcuts, setWizardOpen } = useStore.getState();
+  const { apply, undo, redo, setView, toggleTheme, replaceLayout, sendViewCommand, setShowShortcuts, setWizard } = useStore.getState();
 
   return (
     <header className={s.bar}>
@@ -54,7 +54,7 @@ export function TopBar() {
           <Icon name="redo" />
         </button>
         <span className={s.sep} />
-        <button type="button" className={s.text} title="Set up a new layout step by step: desk, you, and your gear" onClick={() => setWizardOpen(true)}>
+        <button type="button" className={s.text} title="Set up a new layout step by step: desk, you, and your gear" onClick={() => setWizard('manual')}>
           Setup…
         </button>
         <button

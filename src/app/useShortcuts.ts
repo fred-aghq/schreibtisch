@@ -10,6 +10,8 @@ export function useShortcuts(): void {
     const onKey = (e: KeyboardEvent) => {
       if (isTypingTarget(e.target)) return;
       const s = useStore.getState();
+      // The setup wizard is modal: leave the editor alone while it's open.
+      if (s.wizard) return;
       const mod = e.ctrlKey || e.metaKey;
       const key = e.key.toLowerCase();
 

@@ -17,7 +17,7 @@ export function initStore(): () => void {
   const saved = loadCurrentLayout();
   useStore.setState({
     savedLayouts: loadSavedLayouts(),
-    wizardOpen: freshBrowser,
+    wizard: freshBrowser ? 'first-run' : null,
     ...(saved ? { history: createHistory(saved), selection: null } : {}),
     theme: loadTheme(),
     userPresets: loadUserPresets(),

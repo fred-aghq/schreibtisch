@@ -50,7 +50,8 @@ export interface AppState {
   showShortcuts: boolean;
   /** Layouts saved by name in this browser, most recently saved first. */
   savedLayouts: SavedLayout[];
-  wizardOpen: boolean;
+  /** The setup wizard, if open: opened automatically on a first visit, or by the user. */
+  wizard: 'first-run' | 'manual' | null;
   /** The triangle fix being hovered, previewed as ghosts in both views. */
   fixPreview: TriangleFix | null;
   /** How "Move speakers to ideal" sizes the triangle. */
@@ -87,7 +88,7 @@ export interface AppState {
   /** Make a saved layout the current one (fresh undo history). */
   openSavedLayout: (id: string) => void;
   deleteSavedLayout: (id: string) => void;
-  setWizardOpen: (open: boolean) => void;
+  setWizard: (wizard: 'first-run' | 'manual' | null) => void;
   setSpeakerFitMode: (mode: SpeakerFitMode) => void;
 }
 
@@ -111,7 +112,7 @@ export const useStore = create<AppState>()((set, get) => ({
   userPresets: [],
   showShortcuts: false,
   savedLayouts: [],
-  wizardOpen: false,
+  wizard: null,
   fixPreview: null,
   speakerFitMode: 'distance',
 
@@ -179,7 +180,7 @@ export const useStore = create<AppState>()((set, get) => ({
       saveSavedLayouts(savedLayouts);
       return { savedLayouts };
     }),
-  setWizardOpen: (wizardOpen) => set({ wizardOpen }),
+  setWizard: (wizard) => set({ wizard }),
   setSpeakerFitMode: (speakerFitMode) => set({ speakerFitMode }),
 }));
 

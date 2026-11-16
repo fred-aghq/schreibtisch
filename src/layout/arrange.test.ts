@@ -108,7 +108,7 @@ describe('auto-arrange', () => {
   it('says so when even the largest triangle can’t clear the monitors (e.g. a second screen to one side)', () => {
     const { layout, notes } = arrangeLayout(spec({ monitors: [mon(27), mon(27)] }));
     expect(analyzeTriangle(layout)!.sides.lr).toBe(SPEAKER_SIDE_RANGE.max);
-    expect(notes.some((n) => n.includes('closer to them than ideal'))).toBe(true);
+    expect(notes.some((n) => n.includes('doesn’t clear all the monitors'))).toBe(true);
   });
 
   it('puts the keyboard at the front on the listener, the mouse to its right, both on the mat', () => {

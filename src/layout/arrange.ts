@@ -204,7 +204,11 @@ function placeSpeakers(d: Draft, spec: SpeakerSpec, monitors: readonly ObjectIns
         break;
       }
     }
-    if (!found) d.notes.push('The monitors are wide, so the speakers sit closer to them than ideal even at a 1.4 m triangle. Consider a wider triangle or smaller monitors.');
+    if (!found) {
+      d.notes.push(
+        'Even a 1.4 m triangle doesn’t clear all the monitors, so a speaker sits close to (or behind) a screen. Speakers on stands beside the desk, or moving the monitors, can help.',
+      );
+    }
   }
   d.layout = placed;
 

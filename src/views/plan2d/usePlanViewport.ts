@@ -94,7 +94,7 @@ export function usePlanViewport() {
   // Space bar enables click-drag panning.
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && !isTypingTarget(e.target)) {
+      if (e.code === 'Space' && !isTypingTarget(e.target) && !useStore.getState().wizard) {
         e.preventDefault();
         setSpaceHeld(true);
       }

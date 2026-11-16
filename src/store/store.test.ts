@@ -200,11 +200,11 @@ describe('initStore', () => {
 
   it('opens the setup wizard only in a fresh browser', () => {
     dispose = initStore();
-    expect(useStore.getState().wizardOpen).toBe(true);
+    expect(useStore.getState().wizard).toBe('first-run');
     dispose();
     data.set('schreibtisch:theme', 'dark');
     dispose = initStore();
-    expect(useStore.getState().wizardOpen).toBe(false);
+    expect(useStore.getState().wizard).toBeNull();
   });
 
   it('saves, lists, opens and deletes named layouts', () => {
