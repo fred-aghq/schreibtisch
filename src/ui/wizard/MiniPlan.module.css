@@ -1,0 +1,26 @@
+.plan {
+  display: block;
+  width: 100%;
+  border-radius: var(--radius);
+  background: var(--canvas-bg);
+}
+
+.desk {
+  stroke: var(--desk-stroke);
+  stroke-width: 1;
+}
+
+.object {
+  stroke: var(--object-stroke);
+  stroke-width: 1;
+}
+
+.triangle {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.head {
+  fill: var(--listener);
+}

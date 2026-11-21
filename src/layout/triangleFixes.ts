@@ -84,10 +84,15 @@ function placeSpeaker(layout: Layout, inst: ObjectInstance, target: Vec2): Layou
  */
 export function moveSpeakersToIdeal(layout: Layout, mode: SpeakerFitMode): Layout {
   const t = analyzeTriangle(layout);
-  const pair = findSpeakerPair(layout);
-  if (!t || !pair) return layout;
+  if (!t) return layout;
   const s = mode === 'spacing' ? t.sides.lr : (t.sides.leftListener + t.sides.rightListener) / 2;
-  if (s < EPS) return layout;
+  return placeSpeakerPair(layout, s);
+}
+
+/** Place the speaker pair in an equilateral triangle of side `s` with the listener, aimed at the aim point. */
+export function placeSpeakerPair(layout: Layout, s: number): Layout {
+  const pair = findSpeakerPair(layout);
+  if (!pair || s < EPS) return layout;
   const head = listenerHead(layout);
   const ideal = idealSpeakerPoints({ x: head.x, z: head.z }, s);
   return placeSpeaker(placeSpeaker(layout, pair.left, ideal.left), pair.right, ideal.right);

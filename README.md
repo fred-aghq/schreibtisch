@@ -34,6 +34,12 @@ Other shortcuts: arrows nudge 1 mm (Shift = 10 mm), Q/E rotate 1° (Shift = 15°
 - **Overlap warnings:** objects whose footprints intersect (as oriented boxes) get a red outline, but only if they also overlap in height. Desk mats are ignored.
 - **Save as preset** keeps any object in Library → My presets (stored in your browser).
 
+### Setup wizard and saved layouts
+
+- **Setup…** (top bar) walks through your desk, where you sit, and your gear, then auto-arranges a starting layout: the main monitor centred on you, other monitors beside it turned toward you, the speakers in an equilateral triangle with you (smallest side from 0.9–1.4 m that clears the monitors), keyboard and mouse at the front. It tells you if a speaker needs a stand or anything overlaps. Every step can be skipped, and Back keeps your answers.
+- In a brand-new browser (no Schreibtisch data at all) the wizard opens by itself once; **Skip setup** closes it for good.
+- **Save** (Ctrl+S) keeps a copy of the current layout, under its name, in this browser. **Layouts** lists saved copies to open or delete. The current layout is also autosaved, so a reload never loses work; "unsaved" means it differs from its saved copy. The wizard and opening another layout warn before replacing unsaved changes.
+
 ### Speaker triangle
 
 Press **T** (or **Triangle** in the top bar) to show the triangle between your two speakers and your head, in both views. In 3D it's drawn at ear height.

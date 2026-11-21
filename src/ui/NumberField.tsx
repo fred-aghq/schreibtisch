@@ -17,6 +17,8 @@ export interface NumberFieldProps {
   step?: number;
   disabled?: boolean;
   title?: string;
+  /** Extra class on the field (e.g. a compact layout). */
+  className?: string;
   onCommit: (value: number) => void;
 }
 
@@ -35,6 +37,7 @@ export function NumberField({
   step = 1,
   disabled,
   title,
+  className,
   onCommit,
 }: NumberFieldProps) {
   const id = useId();
@@ -82,7 +85,7 @@ export function NumberField({
   };
 
   return (
-    <label className={styles.field} htmlFor={id} title={title}>
+    <label className={className ? `${styles.field} ${className}` : styles.field} htmlFor={id} title={title}>
       <span className={styles.label}>
         {label}
         {hint && <span className={styles.hint}>{hint}</span>}
